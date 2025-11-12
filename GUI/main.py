@@ -1,220 +1,266 @@
+# -*- coding: utf-8 -*-
 import tkinter as tk
-from tkinter import ttk, messagebox
-# Không cần PhotoImage
+from tkinter import ttk
+from tkinter import messagebox
 import subprocess
 import sys
 import os
 
+# NÂNG CẤP: Import tất cả các file GUI
+import quanli_nhanvien
+import quanli_xe
+import quanli_chuyendi
+import quanli_lichsubaotri
+import quanli_nhatkinguyenlieu
+import quanli_taikhoan
+import quanli_taixe 
+
 # ================================================================
-# LẤY VAI TRÒ (ROLE)
+# BỘ MÀU "LIGHT MODE" (Đồng bộ với các file con)
+# ================================================================
+theme_colors = {
+    "bg_main": "#F0F0F0",      # Nền chính (xám rất nhạt)
+    "bg_entry": "#FFFFFF",     # Nền cho Entry, Treeview (trắng)
+    "text": "#000000",         # Màu chữ chính (đen)
+    "text_disabled": "#A0A0A0", # Màu chữ khi bị mờ
+    "accent": "#0078D4",       # Màu nhấn (xanh dương)
+    "accent_text": "#FFFFFF",   # Màu chữ trên nền màu nhấn (trắng)
+    "accent_active": "#005A9E",  # Màu nhấn khi click
+    "disabled_bg": "#E0E0E0"   # Nền khi bị mờ
+}
+
+# ================================================================
+# CẤU HÌNH FONT CHỮ
+# ================================================================
+NAV_TITLE_FONT = ("Calibri", 13, "bold") 
+NAV_BUTTON_FONT = ("Calibri", 12) 
+
+# ================================================================
+# CẤU HÌNH MÀU SẮC (SỬA LẠI: Nav-bar vẫn Dark, Content Light)
+# ================================================================
+# Thanh Nav bên trái (Vẫn giữ Dark Mode)
+NAV_BG = "#1C1C1C" 
+NAV_FG = "#FFFFFF" 
+NAV_HOVER_BG = "#333333" 
+NAV_HOVER_FG = "#0078D7" 
+NAV_EXIT_FG = "red" 
+NAV_DISABLED_FG = "#444444" 
+
+# Khung Main bên phải (Chuyển sang Light Mode)
+MAIN_BG = theme_colors["bg_main"] # Nền xám nhạt
+MAIN_FG = theme_colors["text"] # Chữ đen
+MAIN_FOOTER_FG = theme_colors["text_disabled"] # Chữ xám
+SEPARATOR_COLOR = "#CCCCCC" # Viền xám sáng
+
+# ================================================================
+# LẤY VAI TRÒ (ROLE) TỪ LÚC ĐĂNG NHẬP
 # ================================================================
 try:
     USER_ROLE = sys.argv[1]
-    print(f"Đang chạy Main Menu với vai trò (Từ Login): {USER_ROLE}")
-
 except IndexError:
-    msg = (
-        "Bạn đang chạy file main.py trực tiếp (chế độ Test).\n"
-        "Vui lòng chạy file 'login.py' để đăng nhập.\n\n"
-        "Bạn muốn chạy Test với vai trò 'Admin' (Yes) hay 'TaiXe' (No)?"
-    )
-    if messagebox.askyesno("CHẾ ĐỘ TEST", msg):
-        USER_ROLE = "Admin"
-    else:
-        USER_ROLE = "TaiXe"
+    USER_ROLE = "Admin" # Mặc định là Admin để test
+    print("Không thấy vai trò, mặc định là Admin để test.")
+
+print(f"Đang chạy Main Menu với vai trò: {USER_ROLE}")
+
+# ================================================================
+# NÂNG CẤP: HÀM HIỂN THỊ TRANG
+# ================================================================
+current_page_frame = None 
+
+def show_page(page_creator_func):
+    """Xóa frame cũ và hiển thị frame mới trong main_frame."""
+    global current_page_frame
     
-    print(f"Đang chạy Main Menu với vai trò (TEST): {USER_ROLE}")
+    if current_page_frame:
+        current_page_frame.destroy()
+        
+    # Truyền main_frame làm 'master' cho trang con
+    current_page_frame = page_creator_func(main_frame)
+    current_page_frame.pack(fill=tk.BOTH, expand=True)
 
-# ================================================================
-# HÀM MỞ FORM / ĐĂNG XUẤT
-# ================================================================
-
-def open_form(form_filename):
-    """Hàm này tìm và chạy một file Python khác."""
-    print(f"Đang mở {form_filename}...")
+def show_homepage():
+    """Hiển thị lại trang chủ (Lời chào)."""
+    global current_page_frame
+    if current_page_frame:
+        current_page_frame.destroy()
+        current_page_frame = None 
     
-    python_executable = sys.executable
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    form_path = os.path.join(current_dir, form_filename)
-
-    if not os.path.exists(form_path):
-        messagebox.showerror("Lỗi", f"Không tìm thấy file: {form_filename}\n\nHãy đảm bảo bạn đã lưu file này trong cùng thư mục.")
-        return
-
-    try:
-        subprocess.Popen([python_executable, form_path])
-    except Exception as e:
-        messagebox.showerror("Lỗi khi mở form", f"Không thể khởi chạy {form_filename}:\n{e}")
-
-def open_login():
-    """Đóng form main và mở lại form login."""
-    print("Đăng xuất, mở lại login.py...")
-    
-    python_executable = sys.executable
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    login_path = os.path.join(current_dir, "login.py") 
-
-    if not os.path.exists(login_path):
-        messagebox.showerror("Lỗi", "Không tìm thấy file: login.py")
-        return
-
-    try:
-        subprocess.Popen([python_executable, login_path])
-        root.destroy() 
-    except Exception as e:
-        messagebox.showerror("Lỗi khi mở form", f"Không thể khởi chạy login.py:\n{e}")
-
+    create_main_content(main_frame)
 # ================================================================
-# THIẾT KẾ GIAO DIỆN CHÍNH (Dashboard)
+# THIẾT KẾ GIAO DIỆN CHÍNH
 # ================================================================
 
-# --- Cửa sổ chính ---
 root = tk.Tk()
-root.title(f"Hệ Thống Quản Lý Vận Tải (Vai trò: {USER_ROLE})") 
-root.geometry("900x600") # Kích thước lớn hơn cho dashboard
-root.configure(bg="#ffffff") 
+root.title(f"Hệ Thống Quản Lý Vận Tải (Vai trò: {USER_ROLE})")
+root.state('zoomed') 
+# NỀN CHÍNH CỦA ROOT LÀ NỀN LIGHT
+root.configure(bg=MAIN_BG) 
 
-# --- Hàm căn giữa cửa sổ ---
-def center_window(w, h):
-    ws = root.winfo_screenwidth()
-    hs = root.winfo_screenheight()
-    x = (ws/2) - (w/2)
-    y = (hs/2) - (h/2)
-    root.geometry('%dx%d+%d+%d' % (w, h, x, y))
+# --- Thanh điều hướng bên trái (Vẫn giữ Dark) ---
+left_nav_frame = tk.Frame(root, bg=NAV_BG, width=250)
+left_nav_frame.pack(side=tk.LEFT, fill=tk.Y)
+left_nav_frame.pack_propagate(False) 
 
-center_window(900, 600)
-root.resizable(False, False)
+# --- Viền Phân Cách (Màu sáng) ---
+separator = tk.Frame(root, bg=SEPARATOR_COLOR, width=1)
+separator.pack(side=tk.LEFT, fill=tk.Y)
 
-# --- Cấu hình màu sắc & font chữ ---
-SIDEBAR_BG = "#2c3e50" # Màu xanh đen (Nền Sidebar)
-SIDEBAR_FG = "#ecf0f1" # Màu trắng (Chữ Sidebar)
-HOVER_BG = "#34495e"   # Màu hover
-ACTIVE_BG = "#415b71"  # Màu khi nhấn
-CONTENT_BG = "#ffffff" # Nền trắng (Nội dung chính)
-TITLE_FG = "#003366"   # Màu tiêu đề
-
-button_font = ("Arial", 12, "bold")
-title_font = ("Arial", 24, "bold")
-welcome_font = ("Arial", 20, "bold")
-
-# --- Bố cục chính (Sidebar + Content) ---
-root.grid_rowconfigure(0, weight=1)
-root.grid_columnconfigure(0, weight=0) # Sidebar (không co giãn)
-root.grid_columnconfigure(1, weight=1) # Content (co giãn)
-
-# --- Sidebar Frame ---
-sidebar_frame = tk.Frame(root, bg=SIDEBAR_BG, width=250)
-sidebar_frame.grid(row=0, column=0, sticky="nsw")
-sidebar_frame.pack_propagate(False) # Ngăn sidebar co lại
-
-# --- Content Frame ---
-content_frame = tk.Frame(root, bg=CONTENT_BG)
-content_frame.grid(row=0, column=1, sticky="nsew", padx=20, pady=20)
-
+# --- Khung nội dung chính (Nền sáng) ---
+main_frame = tk.Frame(root, bg=MAIN_BG) 
+main_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
 # ================================================================
-# HÀM HIỆU ỨNG HOVER (Làm sinh động)
-# ================================================================
-def on_enter(e):
-    e.widget.config(background=HOVER_BG, foreground=SIDEBAR_FG)
-
-def on_leave(e):
-    e.widget.config(background=SIDEBAR_BG, foreground=SIDEBAR_FG)
-
-# ================================================================
-# TẠO CÁC NÚT TRONG SIDEBAR
+# THANH ĐIỀU HƯỚNG BÊN TRÁI (NAV BAR)
+# (Giữ nguyên giao diện Dark cho Nav)
 # ================================================================
 
-def create_sidebar_button(text, command):
-    """Hàm tạo nút chuẩn cho sidebar"""
-    btn = tk.Button(sidebar_frame, 
-                    text=text, 
-                    font=button_font,
-                    bg=SIDEBAR_BG, 
-                    fg=SIDEBAR_FG, 
-                    activebackground=ACTIVE_BG,
-                    activeforeground=SIDEBAR_FG,
-                    bd=0,
-                    relief="flat",
-                    anchor="w", # Căn chữ sang trái
-                    padx=25,    # Tăng padding trái để thụt vào
-                    pady=15,
-                    command=command)
+title_btn = tk.Button(left_nav_frame,
+                        text="HỆ THỐNG VẬN TẢI", 
+                        font=NAV_TITLE_FONT, 
+                        bg=NAV_BG, fg=NAV_FG, 
+                        anchor="w", padx=20,
+                        relief="flat", borderwidth=0,
+                        activebackground=NAV_BG, 
+                        activeforeground=NAV_FG,
+                        command=show_homepage)
+title_btn.pack(side=tk.TOP, fill=tk.X, pady=(20, 10))
+
+lbl_padding = tk.Label(left_nav_frame, text="", bg=NAV_BG, font=("Arial", 8))
+lbl_padding.pack(side=tk.TOP, fill=tk.X, pady=10) 
+
+def create_nav_button(parent, text, icon, command):
+    btn_text = f"  {icon}   {text}" 
     
-    btn.bind("<Enter>", on_enter)
-    btn.bind("<Leave>", on_leave)
+    btn = tk.Button(parent, 
+                        text=btn_text, 
+                        font=NAV_BUTTON_FONT, 
+                        bg=NAV_BG, fg=NAV_FG, 
+                        relief="flat", borderwidth=0,
+                        anchor="w", padx=20, pady=10,
+                        activebackground=NAV_HOVER_BG, 
+                        activeforeground=NAV_HOVER_FG, 
+                        command=command)
+    
+    btn.bind("<Enter>", lambda e: e.widget.config(bg=NAV_HOVER_BG, fg=NAV_HOVER_FG))
+    btn.bind("<Leave>", lambda e: e.widget.config(bg=NAV_BG, fg=NAV_FG))
+    
+    btn.pack(side=tk.TOP, fill=tk.X, pady=2, padx=10) 
     return btn
 
-# --- Tiêu đề Sidebar ---
-lbl_menu = tk.Label(sidebar_frame, text="DANH MỤC", font=("Arial", 16, "bold"),
-                    bg=SIDEBAR_BG, fg="#1abc9c") # Màu xanh ngọc
-lbl_menu.pack(pady=20, padx=20)
+# --- Tạo các nút (ĐÃ CẬP NHẬT HOÀN CHỈNH) ---
+btn_xe = create_nav_button(left_nav_frame, "Quản lý Xe", "🚗", 
+                           lambda: show_page(quanli_xe.create_page))
+btn_taixe = create_nav_button(left_nav_frame, "Quản lý Tài Xế", "👤", 
+                             lambda: show_page(quanli_taixe.create_page))
+btn_chuyendi = create_nav_button(left_nav_frame, "Quản lý Chuyến Đi", "🌐", 
+                                 lambda: show_page(quanli_chuyendi.create_page))
+btn_baotri = create_nav_button(left_nav_frame, "Lịch sử Bảo Trì", "🔧", 
+                                lambda: show_page(quanli_lichsubaotri.create_page))
+btn_nhienlieu = create_nav_button(left_nav_frame, "Nhật ký Nhiên Liệu", "🧾", 
+                                  lambda: show_page(quanli_nhatkinguyenlieu.create_page))
+btn_taikhoan = create_nav_button(left_nav_frame, "Quản lý Tài Khoản", "🔑", 
+                                 lambda: show_page(quanli_taikhoan.create_page))
+btn_nhanvien = create_nav_button(left_nav_frame, "Quản lý Nhân Viên", "👥", 
+                                 lambda: show_page(quanli_nhanvien.create_page)) 
+
+
+# --- Nút Thoát (Dưới cùng) ---
+btn_thoat = tk.Button(left_nav_frame, 
+                        text="  ⏻   Thoát", 
+                        font=NAV_BUTTON_FONT, 
+                        bg=NAV_BG, fg=NAV_FG, 
+                        relief="flat", borderwidth=0,
+                        anchor="w", padx=20, pady=10,
+                        activebackground=NAV_HOVER_BG, 
+                        activeforeground=NAV_EXIT_FG, 
+                        command=root.quit)
+
+btn_thoat.bind("<Enter>", lambda e: e.widget.config(bg=NAV_HOVER_BG, fg=NAV_EXIT_FG)) 
+btn_thoat.bind("<Leave>", lambda e: e.widget.config(bg=NAV_BG, fg=NAV_FG))
+btn_thoat.pack(side=tk.BOTTOM, fill=tk.X, pady=(10, 20), padx=10) 
 
 # ================================================================
-# PHÂN QUYỀN (ĐÃ SẮP XẾP LẠI)
+# KHUNG NỘI DUNG CHÍNH (BÊN PHẢI) - SỬA SANG LIGHT MODE
 # ================================================================
 
-# --- Phân quyền (Chỉ Admin thấy) ---
-if USER_ROLE == 'Admin':
-    lbl_admin = tk.Label(sidebar_frame, text="Quản trị hệ thống", font=("Arial", 10, "italic"),
-                         bg=SIDEBAR_BG, fg="#95a5a6")
-    lbl_admin.pack(fill='x', padx=20, pady=(10, 5))
+def create_main_content(parent):
+    """Tạo nội dung gốc (Lời chào) cho main_frame."""
+    # Frame này sẽ bị xóa khi show_page được gọi
+    # SỬA: Dùng MAIN_BG (xám nhạt)
+    home_frame = tk.Frame(parent, bg=MAIN_BG)
     
-    # === THỨ TỰ ĐÃ SẮP XẾP ===
-    btn_nhanvien = create_sidebar_button("👥 QL Nhân Viên", lambda: open_form("quanli_nhanvien.py"))
-    btn_nhanvien.pack(fill='x')
+    lbl_title_main = tk.Label(home_frame, 
+                             text="HỆ THỐNG VẬN TẢI", 
+                             font=("Calibri", 24, "bold"),
+                             bg=MAIN_BG, fg=MAIN_FG) # SỬA: Dùng biến
+    lbl_title_main.pack(pady=(40, 20), fill='x', anchor='center')
+
+    lbl_welcome_main = tk.Label(home_frame, 
+                                text=f"Chào mừng {USER_ROLE}!", 
+                                font=("Calibri", 16),
+                                bg=MAIN_BG, fg=MAIN_FG) # SỬA: Dùng biến
+    lbl_welcome_main.pack(pady=20, fill='x', expand=True, anchor='center')
+
+    lbl_footer_main = tk.Label(home_frame, 
+                              text="Phát triển bởi [Tên Nhóm Của Bạn]", 
+                              font=("Calibri", 10),
+                              bg=MAIN_BG, fg=MAIN_FOOTER_FG) # SỬA: Dùng biến
+    lbl_footer_main.pack(pady=10, side=tk.BOTTOM, anchor='center')
     
-    btn_taixe = create_sidebar_button("👨‍✈️ QL Tài Xế", lambda: open_form("quanli_taixe.py"))
-    btn_taixe.pack(fill='x')
-    
-    btn_xe = create_sidebar_button("🚗 Quản lý Xe", lambda: open_form("quanli_xe.py"))
-    btn_xe.pack(fill='x')
-    
-    btn_taikhoan = create_sidebar_button("🔑 QL Tài Khoản", lambda: open_form("quanli_taikhoan.py"))
-    btn_taikhoan.pack(fill='x')
-
-# --- Chức năng chung (Ai cũng thấy) ---
-lbl_user = tk.Label(sidebar_frame, text="Nghiệp vụ", font=("Arial", 10, "italic"),
-                     bg=SIDEBAR_BG, fg="#95a5a6")
-lbl_user.pack(fill='x', padx=20, pady=(20, 5))
-
-btn_chuyendi = create_sidebar_button("🗺️ QL Chuyến Đi", lambda: open_form("quanli_chuyendi.py"))
-btn_chuyendi.pack(fill='x')
-
-btn_nhienlieu = create_sidebar_button("⛽ Nhiên Liệu", lambda: open_form("quanli_nhatkinguyenlieu.py"))
-btn_nhienlieu.pack(fill='x')
-
-btn_baotri = create_sidebar_button("🔧 Bảo Trì", lambda: open_form("quanli_lichsubaotri.py"))
-btn_baotri.pack(fill='x')
-
-# --- Đăng xuất & Thoát (Luôn ở dưới cùng) ---
-# Dùng pack(side="bottom") để đẩy xuống
-btn_thoat = create_sidebar_button("❌ Thoát", root.quit)
-btn_thoat.pack(fill='x', side="bottom", pady=(0, 20))
-
-# === THÊM LẠI NÚT ĐĂNG XUẤT ===
-btn_dangxuat = create_sidebar_button("📤 Đăng Xuất", open_login)
-btn_dangxuat.pack(fill='x', side="bottom")
-
+    global current_page_frame
+    current_page_frame = home_frame
+    current_page_frame.pack(fill=tk.BOTH, expand=True) 
 
 # ================================================================
-# TẠO NỘI DUNG CHÍNH (Content Frame)
+# PHÂN QUYỀN (CẤU TRÚC MỚI DỄ MỞ RỘNG)
 # ================================================================
-lbl_title = tk.Label(content_frame, text="HỆ THỐNG QUẢN LÝ VẬN TẢI", 
-                     font=title_font, fg=TITLE_FG, bg=CONTENT_BG)
-lbl_title.pack(pady=(10, 20))
 
-tk.Frame(content_frame, height=2, bg="#e0e0e0").pack(fill="x", pady=10)
+def disable_button(btn):
+    """Hàm tùy chỉnh để vô hiệu hóa tk.Button (vì 'state' làm xấu)."""
+    btn.config(fg=NAV_DISABLED_FG, command=lambda: None) 
+    btn.unbind("<Enter>")
+    btn.unbind("<Leave>")
 
-lbl_welcome = tk.Label(content_frame, text=f"Chào mừng, {USER_ROLE}!", 
-                       font=welcome_font, fg="#333", bg=CONTENT_BG)
-lbl_welcome.pack(pady=40)
+def apply_permissions(role):
+    """
+    Áp dụng phân quyền: Vô hiệu hóa các nút không thuộc vai trò (role) này.
+    """
+    
+    # 1. Liệt kê TẤT CẢ các nút cần phân quyền
+    all_buttons = {
+        "xe": btn_xe,
+        "taixe": btn_taixe,
+        "chuyendi": btn_chuyendi,
+        "baotri": btn_baotri,
+        "nhienlieu": btn_nhienlieu,
+        "taikhoan": btn_taikhoan,
+        "nhanvien": btn_nhanvien
+    }
 
-lbl_intro = tk.Label(content_frame, text="Vui lòng chọn một chức năng từ thanh menu bên trái.",
-                     font=("Arial", 14), fg="#555", bg=CONTENT_BG)
-lbl_intro.pack()
+    # 2. Định nghĩa vai trò nào được thấy nút nào
+    permissions = {
+        "Admin": [
+            "xe", "taixe", "chuyendi", "baotri", 
+            "nhienlieu", "taikhoan", "nhanvien"
+        ],
+        "TaiXe": [
+            "chuyendi", "baotri", "nhienlieu"
+        ]
+        # Thêm vai trò khác ở đây
+    }
+
+    # 3. Lấy danh sách các nút ĐƯỢC PHÉP của vai trò hiện tại
+    allowed_keys = permissions.get(role, [])
+
+    # 4. Duyệt qua TẤT CẢ các nút
+    for key, button in all_buttons.items():
+        if key not in allowed_keys:
+            disable_button(button)
 
 # ================================================================
 # CHẠY ỨNG DỤNG
 # ================================================================
+apply_permissions(USER_ROLE) # Áp dụng phân quyền
+create_main_content(main_frame) # Tải trang chủ lần đầu
 root.mainloop()

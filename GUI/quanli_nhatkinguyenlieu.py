@@ -1,151 +1,90 @@
+# -*- coding: utf-8 -*-
 import tkinter as tk
 from tkinter import ttk, messagebox
 from tkcalendar import DateEntry
-import pyodbc 
+# import pyodbc # <-- ĐÃ XÓA
+import utils # <-- IMPORT FILE DÙNG CHUNG
 from datetime import datetime
-import datetime as dt # Dùng cho default date
+import datetime as dt
 
 # ================================================================
-# BỘ MÀU "LIGHT MODE" (Giữ nguyên)
-# ================================================================
-theme_colors = {
-    "bg_main": "#F0F0F0",      # Nền chính (xám rất nhạt)
-    "bg_entry": "#FFFFFF",     # Nền cho Entry, Treeview (trắng)
-    "text": "#000000",         # Màu chữ chính (đen)
-    "text_disabled": "#A0A0A0", # Màu chữ khi bị mờ
-    "accent": "#0078D4",       # Màu nhấn (xanh dương)
-    "accent_text": "#FFFFFF",   # Màu chữ trên nền màu nhấn (trắng)
-    "accent_active": "#005A9E",  # Màu nhấn khi click
-    "disabled_bg": "#E0E0E0"   # Nền khi bị mờ
-}
-
-# ================================================================
-# PHẦN 1: KẾT NỐI CSDL (Giữ nguyên)
-# ================================================================
-def connect_db():
-    """Hàm kết nối đến CSDL SQL Server."""
-    try:
-        conn_string = (
-            r'DRIVER={SQL Server};'
-            r'SERVER=LAPTOP-MKC70SQE\SQLEXPRESS;' # Giữ nguyên server của bạn
-            r'DATABASE=QL_VanTai;'
-            r'Trusted_Connection=yes;' 
-        )
-        conn = pyodbc.connect(conn_string)
-        return conn
-    except pyodbc.Error as e:
-        messagebox.showerror("Lỗi kết nối CSDL", f"Không thể kết nối đến SQL Server:\n{e}")
-        return None
-    except Exception as e:
-        messagebox.showerror("Lỗi không xác định", f"Lỗi: {str(e)}")
-        return None
-
-# ================================================================
-# PHẦN 2: CÁC HÀM TIỆN ÍCH (Tải Combobox - Tái sử dụng)
-# ================================================================
-def load_taixe_combobox():
-    """Tải danh sách tài xế (MaNhanVien - HoVaTen) vào Combobox."""
-    conn = connect_db()
-    if conn is None: return []
-    
-    try:
-        cur = conn.cursor()
-        sql = """
-        SELECT tx.MaNhanVien, nv.HoVaTen 
-        FROM TaiXe tx
-        JOIN NhanVien nv ON tx.MaNhanVien = nv.MaNhanVien
-        WHERE nv.TrangThai = 1
-        ORDER BY nv.HoVaTen
-        """
-        cur.execute(sql)
-        rows = cur.fetchall()
-        return [f"{row[0]} - {row[1]}" for row in rows]
-    except Exception as e:
-        print(f"Lỗi tải combobox tài xế: {e}")
-        return []
-    finally:
-        if conn: conn.close()
-
-def load_xe_combobox():
-    """Tải danh sách xe (BienSoXe) vào Combobox."""
-    conn = connect_db()
-    if conn is None: return []
-    
-    try:
-        cur = conn.cursor()
-        sql = "SELECT BienSoXe FROM Xe WHERE TrangThai = 1 ORDER BY BienSoXe"
-        cur.execute(sql)
-        rows = cur.fetchall()
-        return [row[0] for row in rows]
-    except Exception as e:
-        print(f"Lỗi tải combobox xe: {e}")
-        return []
-    finally:
-        if conn: conn.close()
-
-# ================================================================
-# PHẦN 3: CÁC HÀM CRUD (NÂNG CẤP THEO MẪU)
+# BỘ MÀU "LIGHT MODE"
+# (ĐÃ XÓA - Chuyển sang utils.py)
 # ================================================================
 
-def set_form_state(is_enabled):
+# ================================================================
+# PHẦN 1: KẾT NỐI CSDL
+# (ĐÃ XÓA - Chuyển sang utils.py)
+# ================================================================
+
+# ================================================================
+# PHẦN 2: CÁC HÀM TIỆN ÍCH (Tải Combobox)
+# (ĐÃ XÓA - Chuyển sang utils.py, vì utils đã có)
+# ================================================================
+
+# ================================================================
+# PHẦN 3: CÁC HÀM CRUD
+# (Đã sửa để nhận 'widgets' và dùng utils.connect_db())
+# ================================================================
+
+def set_form_state(is_enabled, widgets):
     """Bật (enable) hoặc Tắt (disable) toàn bộ các trường nhập liệu."""
-    # MaNhatKy luôn disabled
-    entry_manhatky.config(state='disabled')
+    widgets['entry_manhatky'].config(state='disabled')
     
     if is_enabled:
-        # Chế độ Bật
-        cbb_xe.config(state='readonly')
-        cbb_taixe.config(state='readonly')
-        date_ngaydo.config(state='normal')
-        entry_giodo.config(state='normal')
-        entry_solit.config(state='normal')
-        entry_tongchiphi.config(state='normal')
-        entry_soodo.config(state='normal')
-        cbb_trangthai.config(state='readonly')
+        widgets['cbb_xe'].config(state='readonly')
+        widgets['cbb_taixe'].config(state='readonly')
+        widgets['date_ngaydo'].config(state='normal')
+        widgets['entry_giodo'].config(state='normal')
+        widgets['entry_solit'].config(state='normal')
+        widgets['entry_tongchiphi'].config(state='normal')
+        widgets['entry_soodo'].config(state='normal')
+        widgets['cbb_trangthai'].config(state='readonly')
     else:
-        # Chế độ Tắt (Làm mờ)
-        cbb_xe.config(state='disabled')
-        cbb_taixe.config(state='disabled')
-        date_ngaydo.config(state='disabled')
-        entry_giodo.config(state='disabled')
-        entry_solit.config(state='disabled')
-        entry_tongchiphi.config(state='disabled')
-        entry_soodo.config(state='disabled')
-        cbb_trangthai.config(state='disabled')
+        widgets['cbb_xe'].config(state='disabled')
+        widgets['cbb_taixe'].config(state='disabled')
+        widgets['date_ngaydo'].config(state='disabled')
+        widgets['entry_giodo'].config(state='disabled')
+        widgets['entry_solit'].config(state='disabled')
+        widgets['entry_tongchiphi'].config(state='disabled')
+        widgets['entry_soodo'].config(state='disabled')
+        widgets['cbb_trangthai'].config(state='disabled')
 
-def clear_input():
+def clear_input(widgets):
     """(NÚT THÊM) Xóa trắng và Mở khóa các trường nhập liệu (Chế độ Thêm mới)."""
-    set_form_state(is_enabled=True)
+    set_form_state(is_enabled=True, widgets=widgets)
     
-    entry_manhatky.config(state='normal')
-    entry_manhatky.delete(0, tk.END)
-    entry_manhatky.config(state='disabled')
+    widgets['entry_manhatky'].config(state='normal')
+    widgets['entry_manhatky'].delete(0, tk.END)
+    widgets['entry_manhatky'].config(state='disabled')
     
-    cbb_taixe.set("")
-    cbb_xe.set("")
-    entry_solit.delete(0, tk.END)
-    entry_tongchiphi.delete(0, tk.END)
-    entry_soodo.delete(0, tk.END)
+    widgets['cbb_taixe'].set("")
+    widgets['cbb_xe'].set("")
+    widgets['entry_solit'].delete(0, tk.END)
+    widgets['entry_tongchiphi'].delete(0, tk.END)
+    widgets['entry_soodo'].delete(0, tk.END)
     
     now = datetime.now()
-    date_ngaydo.set_date(now.strftime("%Y-%m-%d"))
-    entry_giodo.delete(0, tk.END)
-    entry_giodo.insert(0, now.strftime("%H:%M"))
+    widgets['date_ngaydo'].set_date(now.strftime("%Y-%m-%d"))
+    widgets['entry_giodo'].delete(0, tk.END)
+    widgets['entry_giodo'].insert(0, now.strftime("%H:%M"))
     
-    cbb_trangthai.set("Chờ duyệt") # Giá trị text mới
-    cbb_xe.focus()
+    widgets['cbb_trangthai'].set("Chờ duyệt")
+    widgets['cbb_xe'].focus()
     
+    tree = widgets['tree']
     if tree.selection():
         tree.selection_remove(tree.selection()[0])
 
-def load_data():
+def load_data(widgets):
     """Tải TOÀN BỘ dữ liệu Nhiên liệu VÀ LÀM MỜ FORM."""
+    tree = widgets['tree']
     for i in tree.get_children():
         tree.delete(i)
         
-    conn = connect_db()
+    conn = utils.connect_db() # <-- SỬA
     if conn is None:
-        set_form_state(is_enabled=False) 
+        set_form_state(is_enabled=False, widgets=widgets) 
         return
         
     try:
@@ -161,7 +100,6 @@ def load_data():
         cur.execute(sql)
         rows = cur.fetchall()
         
-        # CẬP NHẬT: Map text mới
         trangthai_map = { 0: "Chờ duyệt", 1: "Đã duyệt", 2: "Từ chối" }
         
         for row in rows:
@@ -182,35 +120,31 @@ def load_data():
             tree.focus(first_item)         
             tree.event_generate("<<TreeviewSelect>>") 
         else:
-            set_form_state(is_enabled=True)
-            clear_input() 
+            set_form_state(is_enabled=True, widgets=widgets)
+            clear_input(widgets) 
             
-    except pyodbc.Error as e:
-        messagebox.showerror("Lỗi tải dữ liệu", f"Lỗi SQL: {str(e)}")
     except Exception as e:
-        messagebox.showerror("Lỗi không xác định", f"Lỗi: {str(e)}")
+        messagebox.showerror("Lỗi tải dữ liệu", f"Lỗi SQL: {str(e)}")
     finally:
         if conn:
             conn.close()
-        # LUÔN LUÔN LÀM MỜ FORM SAU KHI TẢI DỮ LIỆU
-        set_form_state(is_enabled=False)
+        set_form_state(is_enabled=False, widgets=widgets)
 
-def them_nhienlieu():
+def them_nhienlieu(widgets):
     """(LOGIC THÊM) Thêm một nhật ký nhiên liệu mới."""
     try:
-        bienso = cbb_xe_var.get()
-        manv = cbb_taixe_var.get().split(' - ')[0]
+        bienso = widgets['cbb_xe_var'].get()
+        manv = widgets['cbb_taixe_var'].get().split(' - ')[0]
         
-        ngay_do_str = date_ngaydo.get_date().strftime('%Y-%m-%d')
-        gio_do_str = entry_giodo.get() or "00:00"
+        ngay_do_str = widgets['date_ngaydo'].get_date().strftime('%Y-%m-%d')
+        gio_do_str = widgets['entry_giodo'].get() or "00:00"
         tg_nhienlieu = f"{ngay_do_str} {gio_do_str}:00"
         
-        solit = entry_solit.get()
-        tongchiphi = entry_tongchiphi.get()
-        soodo = entry_soodo.get()
+        solit = widgets['entry_solit'].get()
+        tongchiphi = widgets['entry_tongchiphi'].get()
+        soodo = widgets['entry_soodo'].get()
         
-        # CẬP NHẬT: Chuyển text về số
-        trangthai_text = cbb_trangthai_var.get()
+        trangthai_text = widgets['cbb_trangthai_var'].get()
         trangthai_map = {"Chờ duyệt": 0, "Đã duyệt": 1, "Từ chối": 2}
         trangthai_value = trangthai_map.get(trangthai_text, 0)
 
@@ -226,7 +160,7 @@ def them_nhienlieu():
         messagebox.showerror("Lỗi định dạng", f"Dữ liệu số (lít, chi phí, odo) không hợp lệ: {e}")
         return False
 
-    conn = connect_db()
+    conn = utils.connect_db() # <-- SỬA
     if conn is None: return False
 
     try:
@@ -242,26 +176,23 @@ def them_nhienlieu():
         messagebox.showinfo("Thành công", "Đã thêm nhật ký nhiên liệu thành công")
         return True
         
-    except pyodbc.Error as e:
+    except Exception as e:
         conn.rollback() 
         messagebox.showerror("Lỗi SQL", f"Không thể thêm nhật ký:\n{str(e)}")
-        return False
-    except Exception as e:
-        conn.rollback()
-        messagebox.showerror("Lỗi không xác định", f"Lỗi: {str(e)}")
         return False
     finally:
         if conn: conn.close()
 
-def on_item_select(event=None):
+def on_item_select(event, widgets):
     """(SỰ KIỆN CLICK) Khi click vào Treeview, đổ dữ liệu đầy đủ lên form (ở trạng thái mờ)."""
+    tree = widgets['tree']
     selected = tree.selection()
     if not selected: return 
 
     selected_item = tree.item(selected[0])
     manhatky = selected_item['values'][0]
     
-    conn = connect_db()
+    conn = utils.connect_db() # <-- SỬA
     if conn is None: return
 
     try:
@@ -279,83 +210,79 @@ def on_item_select(event=None):
             messagebox.showerror("Lỗi", "Không tìm thấy dữ liệu nhật ký.")
             return
 
-        # Tạm thời MỞ KHÓA form để đổ dữ liệu
-        set_form_state(is_enabled=True)
-        entry_manhatky.config(state='normal')
+        set_form_state(is_enabled=True, widgets=widgets)
+        widgets['entry_manhatky'].config(state='normal')
         
-        # Xóa và Đổ dữ liệu
-        entry_manhatky.delete(0, tk.END)
-        cbb_xe.set("")
-        cbb_taixe.set("")
-        entry_giodo.delete(0, tk.END)
-        entry_solit.delete(0, tk.END)
-        entry_tongchiphi.delete(0, tk.END)
-        entry_soodo.delete(0, tk.END)
+        # Xóa
+        widgets['entry_manhatky'].delete(0, tk.END)
+        widgets['cbb_xe'].set("")
+        widgets['cbb_taixe'].set("")
+        widgets['entry_giodo'].delete(0, tk.END)
+        widgets['entry_solit'].delete(0, tk.END)
+        widgets['entry_tongchiphi'].delete(0, tk.END)
+        widgets['entry_soodo'].delete(0, tk.END)
         
-        entry_manhatky.insert(0, data.MaNhatKy)
-        cbb_xe.set(data.BienSoXe or "")
+        # Điền
+        widgets['entry_manhatky'].insert(0, data.MaNhatKy)
+        widgets['cbb_xe'].set(data.BienSoXe or "")
         
         if data.MaNhanVien:
             cbb_taixe_val = f"{data.MaNhanVien} - {data.HoVaTen}"
-            cbb_taixe.set(cbb_taixe_val)
+            widgets['cbb_taixe'].set(cbb_taixe_val)
         
         if data.NgayDoNhienLieu:
-            date_ngaydo.set_date(data.NgayDoNhienLieu.strftime("%Y-%m-%d"))
-            entry_giodo.insert(0, data.NgayDoNhienLieu.strftime("%H:%M"))
+            widgets['date_ngaydo'].set_date(data.NgayDoNhienLieu.strftime("%Y-%m-%d"))
+            widgets['entry_giodo'].insert(0, data.NgayDoNhienLieu.strftime("%H:%M"))
             
-        entry_solit.insert(0, str(data.SoLit or ""))
-        entry_tongchiphi.insert(0, str(data.TongChiPhi or ""))
-        entry_soodo.insert(0, str(data.SoOdo or ""))
+        widgets['entry_solit'].insert(0, str(data.SoLit or ""))
+        widgets['entry_tongchiphi'].insert(0, str(data.TongChiPhi or ""))
+        widgets['entry_soodo'].insert(0, str(data.SoOdo or ""))
 
-        # CẬP NHẬT: Set text trạng thái
         trangthai_map = {0: "Chờ duyệt", 1: "Đã duyệt", 2: "Từ chối"}
-        cbb_trangthai.set(trangthai_map.get(data.TrangThaiDuyet, "Chờ duyệt"))
+        widgets['cbb_trangthai'].set(trangthai_map.get(data.TrangThaiDuyet, "Chờ duyệt"))
 
-    except pyodbc.Error as e:
-        messagebox.showerror("Lỗi SQL", f"Không thể lấy dữ liệu:\n{str(e)}")
     except Exception as e:
         messagebox.showerror("Lỗi không xác định", f"Lỗi: {str(e)}")
     finally:
         if conn: conn.close()
-        # KHÓA LẠI FORM sau khi đổ dữ liệu
-        entry_manhatky.config(state='disabled') # PK luôn khóa
-        set_form_state(is_enabled=False)
+        widgets['entry_manhatky'].config(state='disabled') 
+        set_form_state(is_enabled=False, widgets=widgets)
 
-def chon_nhienlieu_de_sua(event=None): 
+def chon_nhienlieu_de_sua(widgets): 
     """(NÚT SỬA) Kích hoạt chế độ sửa, Mở khóa form (trừ MaNhatKy)."""
-    selected = tree.selection()
+    selected = widgets['tree'].selection()
     if not selected:
         messagebox.showwarning("Chưa chọn", "Hãy chọn một nhật ký trong danh sách trước khi nhấn 'Sửa'")
         return
 
-    if not entry_manhatky.get():
+    if not widgets['entry_manhatky'].get():
          messagebox.showwarning("Lỗi", "Không tìm thấy mã nhật ký. Vui lòng chọn lại.")
          return
 
-    set_form_state(is_enabled=True)
-    entry_manhatky.config(state='disabled') # PK luôn khóa
-    cbb_xe.focus() 
+    set_form_state(is_enabled=True, widgets=widgets)
+    widgets['entry_manhatky'].config(state='disabled') 
+    widgets['cbb_xe'].focus() 
 
-def luu_nhienlieu_da_sua():
+def luu_nhienlieu_da_sua(widgets):
     """(LOGIC SỬA) Lưu thay đổi (UPDATE) sau khi sửa."""
-    manhatky = entry_manhatky.get()
+    manhatky = widgets['entry_manhatky'].get()
     if not manhatky:
         messagebox.showwarning("Thiếu dữ liệu", "Không có Mã nhật ký để cập nhật")
         return False
 
     try:
-        bienso = cbb_xe_var.get()
-        manv = cbb_taixe_var.get().split(' - ')[0]
+        bienso = widgets['cbb_xe_var'].get()
+        manv = widgets['cbb_taixe_var'].get().split(' - ')[0]
         
-        ngay_do_str = date_ngaydo.get_date().strftime('%Y-%m-%d')
-        gio_do_str = entry_giodo.get() or "00:00"
+        ngay_do_str = widgets['date_ngaydo'].get_date().strftime('%Y-%m-%d')
+        gio_do_str = widgets['entry_giodo'].get() or "00:00"
         tg_nhienlieu = f"{ngay_do_str} {gio_do_str}:00"
         
-        solit = entry_solit.get()
-        tongchiphi = entry_tongchiphi.get()
-        soodo = entry_soodo.get()
+        solit = widgets['entry_solit'].get()
+        tongchiphi = widgets['entry_tongchiphi'].get()
+        soodo = widgets['entry_soodo'].get()
         
-        trangthai_text = cbb_trangthai_var.get()
+        trangthai_text = widgets['cbb_trangthai_var'].get()
         trangthai_map = {"Chờ duyệt": 0, "Đã duyệt": 1, "Từ chối": 2}
         trangthai_value = trangthai_map.get(trangthai_text, 0)
         
@@ -371,7 +298,7 @@ def luu_nhienlieu_da_sua():
         messagebox.showerror("Lỗi định dạng", f"Dữ liệu nhập không hợp lệ: {e}")
         return False
 
-    conn = connect_db()
+    conn = utils.connect_db() # <-- SỬA
     if conn is None: return False
         
     try:
@@ -391,35 +318,31 @@ def luu_nhienlieu_da_sua():
         messagebox.showinfo("Thành công", "Đã cập nhật nhật ký nhiên liệu")
         return True
         
-    except pyodbc.Error as e:
-        conn.rollback()
-        messagebox.showerror("Lỗi SQL", f"Không thể cập nhật:\n{str(e)}")
-        return False
     except Exception as e:
         conn.rollback()
-        messagebox.showerror("Lỗi không xác định", f"Lỗi: {str(e)}")
+        messagebox.showerror("Lỗi SQL", f"Không thể cập nhật:\n{str(e)}")
         return False
     finally:
         if conn: conn.close()
 
-def save_data():
+def save_data(widgets):
     """Lưu dữ liệu, tự động kiểm tra xem nên Thêm mới (INSERT) hay Cập nhật (UPDATE)."""
-    if entry_manhatky.get():
-        success = luu_nhienlieu_da_sua()
+    if widgets['entry_manhatky'].get():
+        success = luu_nhienlieu_da_sua(widgets)
     else:
-        success = them_nhienlieu()
+        success = them_nhienlieu(widgets)
     
     if success:
-        load_data()
+        load_data(widgets)
 
-def xoa_nhienlieu():
+def xoa_nhienlieu(widgets):
     """Xóa nhật ký được chọn."""
-    selected = tree.selection()
+    selected = widgets['tree'].selection()
     if not selected:
         messagebox.showwarning("Chưa chọn", "Hãy chọn một nhật ký để xóa")
         return
         
-    manhatky = entry_manhatky.get() # Lấy mã từ ô entry
+    manhatky = widgets['entry_manhatky'].get() 
 
     if not manhatky:
         messagebox.showwarning("Lỗi", "Không tìm thấy mã nhật ký. Vui lòng chọn lại.")
@@ -428,7 +351,7 @@ def xoa_nhienlieu():
     if not messagebox.askyesno("Xác nhận", f"Bạn có chắc chắn muốn xóa Nhật ký Mã: {manhatky}?"):
         return
 
-    conn = connect_db()
+    conn = utils.connect_db() # <-- SỬA
     if conn is None: return
         
     try:
@@ -437,280 +360,204 @@ def xoa_nhienlieu():
         conn.commit()
         
         messagebox.showinfo("Thành công", "Đã xóa nhật ký thành công")
-        load_data()
+        load_data(widgets)
         
-    except pyodbc.Error as e:
-        conn.rollback()
-        messagebox.showerror("Lỗi SQL", f"Không thể xóa:\n{str(e)}")
     except Exception as e:
         conn.rollback()
-        messagebox.showerror("Lỗi không xác định", f"Lỗi: {str(e)}")
+        messagebox.showerror("Lỗi SQL", f"Không thể xóa:\n{str(e)}")
     finally:
         if conn: conn.close()
 
 # ================================================================
-# PHẦN 4: THIẾT KẾ GIAO DIỆN (Bản Light Mode)
+# PHẦN 4: HÀM TẠO TRANG (HÀM CHÍNH ĐỂ MAIN.PY GỌI)
 # ================================================================
 
-root = tk.Tk()
-root.title("Quản lý Nhiên liệu (Database QL_VanTai)")
-root.config(bg=theme_colors["bg_main"]) 
+def create_page(master):
+    """
+    Hàm này được main.py gọi. 
+    Nó tạo ra toàn bộ nội dung trang và đặt vào 'master' (là main_frame).
+    """
+    
+    # 1. TẠO FRAME CHÍNH
+    page_frame = ttk.Frame(master, style="TFrame")
+    
+    # === CÀI ĐẶT STYLE (CHỈ CẦN 1 DÒNG) ===
+    utils.setup_theme(page_frame) 
+    # ==================================
+    
+    
+    # 2. TẠO GIAO DIỆN (ĐẶT VÀO 'page_frame')
+    lbl_title = ttk.Label(page_frame, text="QUẢN LÝ NHẬT KÝ NHIÊN LIỆU", style="Title.TLabel")
+    lbl_title.pack(pady=15) 
 
-def center_window(w, h):
-    """Hàm căn giữa cửa sổ."""
-    ws = root.winfo_screenwidth()
-    hs = root.winfo_screenheight()
-    x = (ws/2) - (w/2)
-    y = (hs/2) - (h/2)
-    root.geometry('%dx%d+%d+%d' % (w, h, x, y))
+    frame_info = ttk.Frame(page_frame, style="TFrame")
+    frame_info.pack(pady=5, padx=20, fill="x")
 
-center_window(950, 700) 
-root.resizable(False, False)
+    # --- Hàng 1 ---
+    ttk.Label(frame_info, text="Mã nhật ký:").grid(row=0, column=0, padx=5, pady=8, sticky="w")
+    entry_manhatky = ttk.Entry(frame_info, width=30, state='disabled')
+    entry_manhatky.grid(row=0, column=1, padx=5, pady=8, sticky="w")
 
-# === CÀI ĐẶT STYLE (QUAN TRỌNG) ===
-style = ttk.Style(root)
-style.theme_use("clam") 
+    ttk.Label(frame_info, text="Trạng thái:").grid(row=0, column=2, padx=15, pady=8, sticky="w")
+    trangthai_options = ["Chờ duyệt", "Đã duyệt", "Từ chối"]
+    cbb_trangthai_var = tk.StringVar()
+    cbb_trangthai = ttk.Combobox(frame_info, textvariable=cbb_trangthai_var, values=trangthai_options, width=38, state='readonly')
+    cbb_trangthai.grid(row=0, column=3, padx=5, pady=8, sticky="w")
+    cbb_trangthai.set("Chờ duyệt")
 
-# --- Cấu hình chung ---
-style.configure(".", 
-    background=theme_colors["bg_main"],
-    foreground=theme_colors["text"],
-    fieldbackground=theme_colors["bg_entry"],
-    bordercolor="#ACACAC", 
-    lightcolor=theme_colors["bg_main"],
-    darkcolor=theme_colors["bg_main"]
-)
-# --- Frame ---
-style.configure("TFrame", 
-    background=theme_colors["bg_main"]
-)
-# --- Label ---
-style.configure("TLabel", 
-    background=theme_colors["bg_main"],
-    foreground=theme_colors["text"],
-    font=("Segoe UI", 10)
-)
-style.configure("Title.TLabel", 
-    background=theme_colors["bg_main"],
-    foreground=theme_colors["accent"], 
-    font=("Segoe UI", 20, "bold")
-)
-style.configure("Header.TLabel", 
-    background=theme_colors["bg_main"],
-    foreground=theme_colors["text"], 
-    font=("Segoe UI", 11, "bold")
-)
-# --- Entry và Combobox ---
-style.configure("TEntry",
-    font=("Segoe UI", 10),
-    fieldbackground=theme_colors["bg_entry"],
-    foreground=theme_colors["text"],
-    insertcolor=theme_colors["text"] 
-)
-style.map("TEntry",
-    fieldbackground=[('disabled', theme_colors["disabled_bg"])],
-    foreground=[('disabled', theme_colors["text_disabled"])]
-)
-style.configure("TCombobox",
-    font=("Segoe UI", 10),
-    fieldbackground=theme_colors["bg_entry"],
-    background=theme_colors["bg_entry"],
-    foreground=theme_colors["text"]
-)
-root.option_add("*TCombobox*Listbox*background", theme_colors["bg_entry"])
-root.option_add("*TCombobox*Listbox*foreground", theme_colors["text"])
-root.option_add("*TCombobox*Listbox*selectBackground", theme_colors["accent"])
-root.option_add("*TCombobox*Listbox*selectForeground", theme_colors["accent_text"])
-style.map("TCombobox",
-    fieldbackground=[('disabled', theme_colors["disabled_bg"])],
-    foreground=[('disabled', theme_colors["text_disabled"])]
-)
-# --- Button ---
-style.configure("TButton",
-    background=theme_colors["accent"],
-    foreground=theme_colors["accent_text"],
-    font=("Segoe UI", 10, "bold"),
-    padding=5,
-    relief="flat",
-    bordercolor=theme_colors["accent"]
-)
-style.map("TButton",
-    background=[('active', theme_colors["accent_active"])] 
-)
-# --- Treeview (Bảng) ---
-style.configure("Treeview",
-    background=theme_colors["bg_entry"],
-    foreground=theme_colors["text"],
-    fieldbackground=theme_colors["bg_entry"],
-    rowheight=25, 
-    font=("Segoe UI", 10)
-)
-style.map("Treeview",
-    background=[('selected', theme_colors["accent"])], 
-    foreground=[('selected', theme_colors["accent_text"])]
-)
-style.configure("Treeview.Heading",
-    background=theme_colors["accent"],
-    foreground=theme_colors["accent_text"],
-    font=("Segoe UI", 10, "bold"),
-    relief="flat"
-)
-style.map("Treeview.Heading",
-    background=[('active', theme_colors["accent_active"])]
-)
-# --- Scrollbar ---
-style.configure("Vertical.TScrollbar", 
-    background=theme_colors["bg_entry"],
-    troughcolor=theme_colors["bg_main"],
-    arrowcolor=theme_colors["text"]
-)
-style.map("Vertical.TScrollbar",
-    background=[('active', "#C0C0C0")]
-)
-style.configure("Horizontal.TScrollbar", 
-    background=theme_colors["bg_entry"],
-    troughcolor=theme_colors["bg_main"],
-    arrowcolor=theme_colors["text"]
-)
-style.map("Horizontal.TScrollbar",
-    background=[('active', "#C0C0C0")]
-)
-# ==================================
+    # --- Hàng 2 ---
+    ttk.Label(frame_info, text="Xe:").grid(row=1, column=0, padx=5, pady=8, sticky="w")
+    cbb_xe_var = tk.StringVar()
+    cbb_xe = ttk.Combobox(frame_info, textvariable=cbb_xe_var, width=28, state='readonly')
+    cbb_xe.grid(row=1, column=1, padx=5, pady=8, sticky="w")
+    cbb_xe['values'] = utils.load_xe_combobox() # <-- SỬA
+
+    ttk.Label(frame_info, text="Tài xế đổ:").grid(row=1, column=2, padx=15, pady=8, sticky="w")
+    cbb_taixe_var = tk.StringVar()
+    cbb_taixe = ttk.Combobox(frame_info, textvariable=cbb_taixe_var, width=38, state='readonly')
+    cbb_taixe.grid(row=1, column=3, padx=5, pady=8, sticky="w")
+    cbb_taixe['values'] = utils.load_taixe_combobox() # <-- SỬA
+
+    # --- Hàng 3 (Thời gian) ---
+    ttk.Label(frame_info, text="Ngày đổ:").grid(row=2, column=0, padx=5, pady=8, sticky="w")
+    date_entry_style_options = {
+        'width': 28, 'date_pattern': 'yyyy-MM-dd',
+        'background': utils.theme_colors["bg_entry"], 
+        'foreground': utils.theme_colors["text"],
+        'disabledbackground': utils.theme_colors["disabled_bg"],
+        'disabledforeground': utils.theme_colors["text_disabled"],
+        'bordercolor': utils.theme_colors["bg_entry"],
+        'headersbackground': utils.theme_colors["accent"],
+        'headersforeground': utils.theme_colors["accent_text"],
+        'selectbackground': utils.theme_colors["accent"],
+        'selectforeground': utils.theme_colors["accent_text"]
+    }
+    date_ngaydo = DateEntry(frame_info, **date_entry_style_options)
+    date_ngaydo.grid(row=2, column=1, padx=5, pady=8, sticky="w")
+
+    ttk.Label(frame_info, text="Giờ đổ (HH:MM):").grid(row=2, column=2, padx=15, pady=8, sticky="w")
+    entry_giodo = ttk.Entry(frame_info, width=40)
+    entry_giodo.grid(row=2, column=3, padx=5, pady=8, sticky="w")
+
+    # --- Hàng 4 (Chi phí) ---
+    ttk.Label(frame_info, text="Số lít:").grid(row=3, column=0, padx=5, pady=8, sticky="w")
+    entry_solit = ttk.Entry(frame_info, width=30)
+    entry_solit.grid(row=3, column=1, padx=5, pady=8, sticky="w")
+
+    ttk.Label(frame_info, text="Tổng chi phí:").grid(row=3, column=2, padx=15, pady=8, sticky="w")
+    entry_tongchiphi = ttk.Entry(frame_info, width=40)
+    entry_tongchiphi.grid(row=3, column=3, padx=5, pady=8, sticky="w")
+
+    # --- Hàng 5 (Odo) ---
+    ttk.Label(frame_info, text="Số Odo (Km):").grid(row=4, column=0, padx=5, pady=8, sticky="w")
+    entry_soodo = ttk.Entry(frame_info, width=30)
+    entry_soodo.grid(row=4, column=1, padx=5, pady=8, sticky="w")
 
 
-lbl_title = ttk.Label(root, text="QUẢN LÝ NHẬT KÝ NHIÊN LIỆU", style="Title.TLabel")
-lbl_title.pack(pady=15) 
+    frame_info.columnconfigure(1, weight=1)
+    frame_info.columnconfigure(3, weight=1)
 
-frame_info = ttk.Frame(root, style="TFrame")
-frame_info.pack(pady=5, padx=20, fill="x")
+    # ===== Frame nút (SỬA LỖI: Đưa lên TRƯỚC Bảng) =====
+    frame_btn = ttk.Frame(page_frame, style="TFrame")
+    frame_btn.pack(pady=10)
 
-# --- Hàng 1 ---
-ttk.Label(frame_info, text="Mã nhật ký:").grid(row=0, column=0, padx=5, pady=8, sticky="w")
-entry_manhatky = ttk.Entry(frame_info, width=30, state='disabled')
-entry_manhatky.grid(row=0, column=1, padx=5, pady=8, sticky="w")
+    # ===== Bảng danh sách (SỬA LỖI: Đưa xuống DƯỚI nút) =====
+    lbl_ds = ttk.Label(page_frame, text="Danh sách nhật ký nhiên liệu (Sắp xếp mới nhất)", style="Header.TLabel")
+    lbl_ds.pack(pady=(10, 5), padx=20, anchor="w")
 
-ttk.Label(frame_info, text="Trạng thái:").grid(row=0, column=2, padx=15, pady=8, sticky="w")
-# CẬP NHẬT: Tùy chọn Combobox sạch
-trangthai_options = ["Chờ duyệt", "Đã duyệt", "Từ chối"]
-cbb_trangthai_var = tk.StringVar()
-cbb_trangthai = ttk.Combobox(frame_info, textvariable=cbb_trangthai_var, values=trangthai_options, width=38, state='readonly')
-cbb_trangthai.grid(row=0, column=3, padx=5, pady=8, sticky="w")
-cbb_trangthai.set("Chờ duyệt")
+    frame_tree = ttk.Frame(page_frame, style="TFrame")
+    frame_tree.pack(pady=10, padx=20, fill="both", expand=True) # expand=True ở cuối
 
-# --- Hàng 2 ---
-ttk.Label(frame_info, text="Xe:").grid(row=1, column=0, padx=5, pady=8, sticky="w")
-cbb_xe_var = tk.StringVar()
-cbb_xe = ttk.Combobox(frame_info, textvariable=cbb_xe_var, width=28, state='readonly')
-cbb_xe.grid(row=1, column=1, padx=5, pady=8, sticky="w")
-cbb_xe['values'] = load_xe_combobox()
+    scrollbar_y = ttk.Scrollbar(frame_tree, orient=tk.VERTICAL, style="Vertical.TScrollbar")
+    scrollbar_x = ttk.Scrollbar(frame_tree, orient=tk.HORIZONTAL, style="Horizontal.TScrollbar")
 
-ttk.Label(frame_info, text="Tài xế đổ:").grid(row=1, column=2, padx=15, pady=8, sticky="w")
-cbb_taixe_var = tk.StringVar()
-cbb_taixe = ttk.Combobox(frame_info, textvariable=cbb_taixe_var, width=38, state='readonly')
-cbb_taixe.grid(row=1, column=3, padx=5, pady=8, sticky="w")
-cbb_taixe['values'] = load_taixe_combobox()
+    columns = ("ma_nk", "bienso", "ten_tx", "ngay_do", "so_lit", "tong_cp", "trangthai")
+    tree = ttk.Treeview(frame_tree, columns=columns, show="headings", height=10,
+                        yscrollcommand=scrollbar_y.set, xscrollcommand=scrollbar_x.set)
 
-# --- Hàng 3 (Thời gian) ---
-ttk.Label(frame_info, text="Ngày đổ:").grid(row=2, column=0, padx=5, pady=8, sticky="w")
-# Style DateEntry
-date_entry_style_options = {
-    'width': 28, 'date_pattern': 'yyyy-MM-dd',
-    'background': theme_colors["bg_entry"], 
-    'foreground': theme_colors["text"],
-    'disabledbackground': theme_colors["disabled_bg"],
-    'disabledforeground': theme_colors["text_disabled"],
-    'bordercolor': theme_colors["bg_entry"],
-    'headersbackground': theme_colors["accent"],
-    'headersforeground': theme_colors["accent_text"],
-    'selectbackground': theme_colors["accent"],
-    'selectforeground': theme_colors["accent_text"]
-}
-date_ngaydo = DateEntry(frame_info, **date_entry_style_options)
-date_ngaydo.grid(row=2, column=1, padx=5, pady=8, sticky="w")
+    scrollbar_y.config(command=tree.yview)
+    scrollbar_x.config(command=tree.xview)
+    scrollbar_y.pack(side=tk.RIGHT, fill=tk.Y)
+    scrollbar_x.pack(side=tk.BOTTOM, fill=tk.X)
 
-ttk.Label(frame_info, text="Giờ đổ (HH:MM):").grid(row=2, column=2, padx=15, pady=8, sticky="w")
-entry_giodo = ttk.Entry(frame_info, width=40)
-entry_giodo.grid(row=2, column=3, padx=5, pady=8, sticky="w")
+    tree.heading("ma_nk", text="Mã NK")
+    tree.column("ma_nk", width=60, anchor="center")
+    tree.heading("bienso", text="Biển số xe")
+    tree.column("bienso", width=100)
+    tree.heading("ten_tx", text="Tên Tài xế")
+    tree.column("ten_tx", width=150)
+    tree.heading("ngay_do", text="Ngày đổ")
+    tree.column("ngay_do", width=150)
+    tree.heading("so_lit", text="Số lít")
+    tree.column("so_lit", width=80, anchor="e") 
+    tree.heading("tong_cp", text="Tổng chi phí")
+    tree.column("tong_cp", width=100, anchor="e") 
+    tree.heading("trangthai", text="Trạng thái")
+    tree.column("trangthai", width=100, anchor="center")
 
-# --- Hàng 4 (Chi phí) ---
-ttk.Label(frame_info, text="Số lít:").grid(row=3, column=0, padx=5, pady=8, sticky="w")
-entry_solit = ttk.Entry(frame_info, width=30)
-entry_solit.grid(row=3, column=1, padx=5, pady=8, sticky="w")
+    tree.pack(fill="both", expand=True)
+    
+    # 3. TẠO TỪ ĐIỂN 'widgets'
+    widgets = {
+        "tree": tree,
+        "entry_manhatky": entry_manhatky,
+        "cbb_xe": cbb_xe,
+        "cbb_taixe": cbb_taixe,
+        "date_ngaydo": date_ngaydo,
+        "entry_giodo": entry_giodo,
+        "entry_solit": entry_solit,
+        "entry_tongchiphi": entry_tongchiphi,
+        "entry_soodo": entry_soodo,
+        "cbb_trangthai": cbb_trangthai,
+        "cbb_xe_var": cbb_xe_var,
+        "cbb_taixe_var": cbb_taixe_var,
+        "cbb_trangthai_var": cbb_trangthai_var
+    }
 
-ttk.Label(frame_info, text="Tổng chi phí:").grid(row=3, column=2, padx=15, pady=8, sticky="w")
-entry_tongchiphi = ttk.Entry(frame_info, width=40)
-entry_tongchiphi.grid(row=3, column=3, padx=5, pady=8, sticky="w")
+    # (Code tạo nút bây giờ nằm trong frame_btn ở trên)
+    btn_them = ttk.Button(frame_btn, text="Thêm", width=8, command=lambda: clear_input(widgets)) 
+    btn_them.grid(row=0, column=0, padx=10)
+    btn_luu = ttk.Button(frame_btn, text="Lưu", width=8, command=lambda: save_data(widgets)) 
+    btn_luu.grid(row=0, column=1, padx=10)
+    btn_sua = ttk.Button(frame_btn, text="Sửa", width=8, command=lambda: chon_nhienlieu_de_sua(widgets)) 
+    btn_sua.grid(row=0, column=2, padx=10)
+    btn_huy = ttk.Button(frame_btn, text="Hủy", width=8, command=lambda: load_data(widgets)) 
+    btn_huy.grid(row=0, column=3, padx=10)
+    btn_xoa = ttk.Button(frame_btn, text="Xóa", width=8, command=lambda: xoa_nhienlieu(widgets)) 
+    btn_xoa.grid(row=0, column=4, padx=10)
+    # (Bỏ nút Thoát)
+    
+    # 4. KẾT NỐI BINDING
+    tree.bind("<<TreeviewSelect>>", lambda event: on_item_select(event, widgets)) 
 
-# --- Hàng 5 (Odo) ---
-ttk.Label(frame_info, text="Số Odo (Km):").grid(row=4, column=0, padx=5, pady=8, sticky="w")
-entry_soodo = ttk.Entry(frame_info, width=30)
-entry_soodo.grid(row=4, column=1, padx=5, pady=8, sticky="w")
-
-
-# Cấu hình grid co giãn
-frame_info.columnconfigure(1, weight=1)
-frame_info.columnconfigure(3, weight=1)
-
-# ===== Frame nút (Đã cập nhật command) =====
-frame_btn = ttk.Frame(root, style="TFrame")
-frame_btn.pack(pady=10)
-
-btn_them = ttk.Button(frame_btn, text="Thêm", width=8, command=clear_input) 
-btn_them.grid(row=0, column=0, padx=10)
-btn_luu = ttk.Button(frame_btn, text="Lưu", width=8, command=save_data) 
-btn_luu.grid(row=0, column=1, padx=10)
-btn_sua = ttk.Button(frame_btn, text="Sửa", width=8, command=chon_nhienlieu_de_sua) 
-btn_sua.grid(row=0, column=2, padx=10)
-btn_huy = ttk.Button(frame_btn, text="Hủy", width=8, command=load_data) 
-btn_huy.grid(row=0, column=3, padx=10)
-btn_xoa = ttk.Button(frame_btn, text="Xóa", width=8, command=xoa_nhienlieu) 
-btn_xoa.grid(row=0, column=4, padx=10)
-btn_thoat = ttk.Button(frame_btn, text="Thoát", width=8, command=root.quit)
-btn_thoat.grid(row=0, column=5, padx=10)
-
-
-# ===== Bảng danh sách =====
-lbl_ds = ttk.Label(root, text="Danh sách nhật ký nhiên liệu (Sắp xếp mới nhất)", style="Header.TLabel")
-lbl_ds.pack(pady=(10, 5), padx=20, anchor="w")
-
-frame_tree = ttk.Frame(root, style="TFrame")
-frame_tree.pack(pady=10, padx=20, fill="both", expand=True) 
-
-scrollbar_y = ttk.Scrollbar(frame_tree, orient=tk.VERTICAL, style="Vertical.TScrollbar")
-scrollbar_x = ttk.Scrollbar(frame_tree, orient=tk.HORIZONTAL, style="Horizontal.TScrollbar")
-
-columns = ("ma_nk", "bienso", "ten_tx", "ngay_do", "so_lit", "tong_cp", "trangthai")
-tree = ttk.Treeview(frame_tree, columns=columns, show="headings", height=10,
-                    yscrollcommand=scrollbar_y.set, xscrollcommand=scrollbar_x.set)
-
-scrollbar_y.config(command=tree.yview)
-scrollbar_x.config(command=tree.xview)
-
-scrollbar_y.pack(side=tk.RIGHT, fill=tk.Y)
-scrollbar_x.pack(side=tk.BOTTOM, fill=tk.X)
-
-tree.heading("ma_nk", text="Mã NK")
-tree.column("ma_nk", width=60, anchor="center")
-tree.heading("bienso", text="Biển số xe")
-tree.column("bienso", width=100)
-tree.heading("ten_tx", text="Tên Tài xế")
-tree.column("ten_tx", width=150)
-tree.heading("ngay_do", text="Ngày đổ")
-tree.column("ngay_do", width=150)
-tree.heading("so_lit", text="Số lít")
-tree.column("so_lit", width=80, anchor="e") 
-tree.heading("tong_cp", text="Tổng chi phí")
-tree.column("tong_cp", width=100, anchor="e") 
-tree.heading("trangthai", text="Trạng thái")
-tree.column("trangthai", width=100, anchor="center")
-
-tree.pack(fill="both", expand=True)
-
-# THÊM BINDING (SỰ KIỆN CLICK)
-tree.bind("<<TreeviewSelect>>", on_item_select) 
+    # 5. TẢI DỮ LIỆU LẦN ĐẦU
+    load_data(widgets) 
+    
+    # 6. TRẢ VỀ FRAME CHÍNH
+    return page_frame
 
 # ================================================================
-# PHẦN 5: CHẠY ỨNG DỤNG
+# PHẦN 5: CHẠY THỬ NGHIỆM
 # ================================================================
-load_data() 
-root.mainloop()
+if __name__ == "__main__":
+    
+    test_root = tk.Tk()
+    test_root.title("Test Quản lý Nhiên liệu")
+
+    # SỬA: Dùng hàm từ utils (cần import utils)
+    import utils 
+    
+    def center_window(w, h): # Giữ lại hàm test nếu utils chưa có
+        ws = test_root.winfo_screenwidth()
+        hs = test_root.winfo_screenheight()
+        x = (ws/2) - (w/2)
+        y = (hs/2) - (h/2)
+        test_root.geometry('%dx%d+%d+%d' % (w, h, x, y))
+
+    center_window(950, 700) 
+    test_root.resizable(False, False)
+    
+    page = create_page(test_root) 
+    page.pack(fill="both", expand=True)
+    
+    test_root.mainloop()

@@ -1,114 +1,75 @@
+# -*- coding: utf-8 -*-
 import tkinter as tk
 from tkinter import ttk, messagebox
-# Không cần DateEntry
-import pyodbc 
+# import pyodbc # <-- ĐÃ XÓA
+import utils # <-- IMPORT FILE DÙNG CHUNG
 from datetime import datetime
 import hashlib 
 
 # ================================================================
 # BỘ MÀU "LIGHT MODE"
+# (ĐÃ XÓA - Chuyển sang utils.py)
 # ================================================================
-theme_colors = {
-    "bg_main": "#F0F0F0",      # Nền chính (xám rất nhạt)
-    "bg_entry": "#FFFFFF",     # Nền cho Entry, Treeview (trắng)
-    "text": "#000000",         # Màu chữ chính (đen)
-    "text_disabled": "#A0A0A0", # Màu chữ khi bị mờ
-    "accent": "#0078D4",       # Màu nhấn (xanh dương)
-    "accent_text": "#FFFFFF",   # Màu chữ trên nền màu nhấn (trắng)
-    "accent_active": "#005A9E",  # Màu nhấn khi click
-    "disabled_bg": "#E0E0E0"   # Nền khi bị mờ
-}
 
 # Biến tạm để xử lý Mật khẩu
 PASSWORD_PLACEHOLDER = "******"
 
 # ================================================================
-# PHẦN 1: KẾT NỐI CSDL (Giữ nguyên)
+# PHẦN 1: KẾT NỐI CSDL
+# (ĐÃ XÓA - Chuyển sang utils.py)
 # ================================================================
-def connect_db():
-    """Hàm kết nối đến CSDL SQL Server."""
-    try:
-        conn_string = (
-            r'DRIVER={SQL Server};'
-            r'SERVER=LAPTOP-MKC70SQE\SQLEXPRESS;' # Giữ nguyên server của bạn
-            r'DATABASE=QL_VanTai;'
-            r'Trusted_Connection=yes;' 
-        )
-        conn = pyodbc.connect(conn_string)
-        return conn
-    except pyodbc.Error as e:
-        messagebox.showerror("Lỗi kết nối CSDL", f"Không thể kết nối đến SQL Server:\n{e}")
-        return None
-    except Exception as e:
-        messagebox.showerror("Lỗi không xác định", f"Lỗi: {str(e)}")
-        return None
 
 # ================================================================
 # PHẦN 2: CÁC HÀM TIỆN ÍCH & LOGIC BẢO MẬT
+# (ĐÃ XÓA load_nhanvien_combobox - Chuyển sang utils.py)
 # ================================================================
 def hash_password(password):
     """Hàm băm mật khẩu bằng SHA-256."""
     return hashlib.sha256(password.encode('utf-8')).hexdigest()
 
-def load_nhanvien_combobox():
-    """Tải danh sách TẤT CẢ nhân viên (MaNhanVien - HoVaTen)."""
-    conn = connect_db()
-    if conn is None: return []
-    
-    try:
-        cur = conn.cursor()
-        sql = "SELECT MaNhanVien, HoVaTen FROM NhanVien ORDER BY HoVaTen"
-        cur.execute(sql)
-        rows = cur.fetchall()
-        return [f"{row[0]} - {row[1]}" for row in rows]
-    except Exception as e:
-        print(f"Lỗi tải combobox nhân viên: {e}")
-        return []
-    finally:
-        if conn: conn.close()
+# ================================================================
+# PHẦN 3: CÁC HÀM CRUD
+# (Đã sửa để nhận 'widgets' và dùng utils.connect_db())
+# ================================================================
 
-def set_form_state(is_enabled):
+def set_form_state(is_enabled, widgets):
     """Bật (enable) hoặc Tắt (disable) các trường ngoại trừ PK."""
-    # Trạng thái PK (entry_tendangnhap) được quản lý riêng
     if is_enabled:
-        entry_matkhau.config(state='normal')
-        cbb_nhanvien.config(state='readonly')
-        cbb_vaitro.config(state='readonly')
+        widgets['entry_matkhau'].config(state='normal')
+        widgets['cbb_nhanvien'].config(state='readonly')
+        widgets['cbb_vaitro'].config(state='readonly')
     else:
-        entry_matkhau.config(state='disabled')
-        cbb_nhanvien.config(state='disabled')
-        cbb_vaitro.config(state='disabled')
-        # Khóa luôn trường Tên đăng nhập để tránh chỉnh sửa ngoài ý muốn
-        entry_tendangnhap.config(state='disabled')
+        widgets['entry_matkhau'].config(state='disabled')
+        widgets['cbb_nhanvien'].config(state='disabled')
+        widgets['cbb_vaitro'].config(state='disabled')
+        widgets['entry_tendangnhap'].config(state='disabled')
 
-def clear_input():
+def clear_input(widgets):
     """(NÚT THÊM) Xóa trắng và Mở khóa PK."""
-    set_form_state(is_enabled=True)
+    set_form_state(is_enabled=True, widgets=widgets)
     
-    # Mở khóa Tên đăng nhập
-    entry_tendangnhap.config(state='normal')
-    entry_tendangnhap.delete(0, tk.END)
+    widgets['entry_tendangnhap'].config(state='normal')
+    widgets['entry_tendangnhap'].delete(0, tk.END)
     
-    entry_matkhau.delete(0, tk.END)
-    cbb_nhanvien.set("")
-    cbb_vaitro.set("TaiXe") 
+    widgets['entry_matkhau'].delete(0, tk.END)
+    widgets['cbb_nhanvien'].set("")
+    widgets['cbb_vaitro'].set("TaiXe") 
     
-    entry_tendangnhap.focus()
+    widgets['entry_tendangnhap'].focus()
+    
+    tree = widgets['tree']
     if tree.selection():
         tree.selection_remove(tree.selection()[0])
 
-# ================================================================
-# PHẦN 3: CÁC HÀM CRUD (CHO TÀI KHOẢN)
-# ================================================================
-
-def load_data():
+def load_data(widgets):
     """Tải TOÀN BỘ dữ liệu Tài khoản VÀ LÀM MỜ FORM."""
+    tree = widgets['tree']
     for i in tree.get_children():
         tree.delete(i)
         
-    conn = connect_db()
+    conn = utils.connect_db() # <-- SỬA
     if conn is None:
-        set_form_state(is_enabled=False)
+        set_form_state(is_enabled=False, widgets=widgets)
         return
         
     try:
@@ -136,29 +97,26 @@ def load_data():
             first_item = children[0]
             tree.selection_set(first_item) 
             tree.focus(first_item)         
-            tree.event_generate("<<TreeviewSelect>>") # Kích hoạt on_item_select
+            tree.event_generate("<<TreeviewSelect>>") 
         else:
-            set_form_state(is_enabled=True)
-            clear_input() 
+            set_form_state(is_enabled=True, widgets=widgets)
+            clear_input(widgets) 
             
-    except pyodbc.Error as e:
-        messagebox.showerror("Lỗi tải dữ liệu", f"Lỗi SQL: {str(e)}")
     except Exception as e:
-        messagebox.showerror("Lỗi không xác định", f"Lỗi: {str(e)}")
+        messagebox.showerror("Lỗi tải dữ liệu", f"Lỗi SQL: {str(e)}")
     finally:
         if conn: conn.close()
-        # LUÔN LUÔN KHÓA FORM VÀ PK SAU KHI TẢI
-        set_form_state(is_enabled=False)
-        entry_tendangnhap.config(state='disabled')
+        set_form_state(is_enabled=False, widgets=widgets)
+        widgets['entry_tendangnhap'].config(state='disabled')
 
 
-def them_taikhoan():
+def them_taikhoan(widgets):
     """(LOGIC THÊM) Thêm một tài khoản mới."""
     try:
-        tendn = entry_tendangnhap.get()
-        matkhau = entry_matkhau.get()
-        manv = cbb_nhanvien_var.get().split(' - ')[0]
-        vaitro = cbb_vaitro_var.get()
+        tendn = widgets['entry_tendangnhap'].get()
+        matkhau = widgets['entry_matkhau'].get()
+        manv = widgets['cbb_nhanvien_var'].get().split(' - ')[0]
+        vaitro = widgets['cbb_vaitro_var'].get()
 
         if not tendn or not matkhau:
             messagebox.showwarning("Thiếu dữ liệu", "Vui lòng nhập Tên đăng nhập và Mật khẩu")
@@ -172,7 +130,7 @@ def them_taikhoan():
         messagebox.showerror("Lỗi định dạng", f"Dữ liệu nhập không hợp lệ (chưa chọn nhân viên?): {e}")
         return False
 
-    conn = connect_db()
+    conn = utils.connect_db() # <-- SỬA
     if conn is None: return False
 
     try:
@@ -186,31 +144,32 @@ def them_taikhoan():
         messagebox.showinfo("Thành công", "Đã thêm tài khoản mới thành công")
         return True
         
-    except pyodbc.IntegrityError as e:
-        conn.rollback() 
-        if "PRIMARY KEY" in str(e):
-             messagebox.showerror("Lỗi Trùng lặp", f"Tên đăng nhập '{tendn}' đã tồn tại.")
-        elif "FOREIGN KEY" in str(e):
-             messagebox.showerror("Lỗi Trùng lặp", f"Nhân viên '{manv}' có thể đã có tài khoản.")
-        else:
-             messagebox.showerror("Lỗi SQL", f"Không thể thêm:\n{str(e)}")
-        return False
     except Exception as e:
-        conn.rollback()
-        messagebox.showerror("Lỗi không xác định", f"Lỗi: {str(e)}")
+        conn.rollback() 
+        # Cần import pyodbc ở đầu file để bắt lỗi cụ thể
+        try:
+            if "PRIMARY KEY" in str(e):
+                messagebox.showerror("Lỗi Trùng lặp", f"Tên đăng nhập '{tendn}' đã tồn tại.")
+            elif "FOREIGN KEY" in str(e):
+                messagebox.showerror("Lỗi Trùng lặp", f"Nhân viên '{manv}' có thể đã có tài khoản.")
+            else:
+                messagebox.showerror("Lỗi SQL", f"Không thể thêm:\n{str(e)}")
+        except: # Fallback
+             messagebox.showerror("Lỗi SQL", f"Không thể thêm:\n{str(e)}")
         return False
     finally:
         if conn: conn.close()
 
-def on_item_select(event=None):
+def on_item_select(event, widgets):
     """(SỰ KIỆN CLICK) Lấy thông tin tài khoản và điền vào form (ở chế độ mờ)."""
+    tree = widgets['tree']
     selected = tree.selection()
     if not selected: return 
 
     selected_item = tree.item(selected[0])
     tendn = selected_item['values'][0]
     
-    conn = connect_db()
+    conn = utils.connect_db() # <-- SỬA
     if conn is None: return
 
     try:
@@ -223,81 +182,72 @@ def on_item_select(event=None):
             messagebox.showerror("Lỗi", "Không tìm thấy dữ liệu tài khoản.")
             return
 
-        # Tạm thời MỞ KHÓA form để đổ dữ liệu
-        set_form_state(is_enabled=True)
-        entry_tendangnhap.config(state='normal')
+        set_form_state(is_enabled=True, widgets=widgets)
+        widgets['entry_tendangnhap'].config(state='normal')
         
-        # Xóa và Đổ dữ liệu
-        entry_tendangnhap.delete(0, tk.END)
-        entry_matkhau.delete(0, tk.END)
-        cbb_nhanvien.set("")
+        # Xóa
+        widgets['entry_tendangnhap'].delete(0, tk.END)
+        widgets['entry_matkhau'].delete(0, tk.END)
+        widgets['cbb_nhanvien'].set("")
         
-        entry_tendangnhap.insert(0, data.TenDangNhap)
-        
-        # Đặt mật khẩu placeholder
-        entry_matkhau.insert(0, PASSWORD_PLACEHOLDER)
+        # Điền
+        widgets['entry_tendangnhap'].insert(0, data.TenDangNhap)
+        widgets['entry_matkhau'].insert(0, PASSWORD_PLACEHOLDER)
         
         if data.MaNhanVien:
             cbb_nhanvien_val = f"{data.MaNhanVien} - {data.HoVaTen}"
-            cbb_nhanvien.set(cbb_nhanvien_val)
+            widgets['cbb_nhanvien'].set(cbb_nhanvien_val)
         
-        cbb_vaitro.set(data.VaiTro or "TaiXe")
+        widgets['cbb_vaitro'].set(data.VaiTro or "TaiXe")
 
-    except pyodbc.Error as e:
-        messagebox.showerror("Lỗi SQL", f"Không thể lấy dữ liệu:\n{str(e)}")
     except Exception as e:
         messagebox.showerror("Lỗi không xác định", f"Lỗi: {str(e)}")
     finally:
         if conn: conn.close()
-        # KHÓA LẠI FORM SAU KHI ĐỔ DỮ LIỆU
-        entry_tendangnhap.config(state='disabled') # PK luôn khóa
-        set_form_state(is_enabled=False)
+        widgets['entry_tendangnhap'].config(state='disabled') 
+        set_form_state(is_enabled=False, widgets=widgets)
 
 
-def chon_taikhoan_de_sua(event=None): 
+def chon_taikhoan_de_sua(widgets): 
     """(NÚT SỬA) Kích hoạt chế độ sửa, Mở khóa các ô nhập liệu (trừ Tên đăng nhập)."""
-    selected = tree.selection()
+    selected = widgets['tree'].selection()
     if not selected:
         messagebox.showwarning("Chưa chọn", "Hãy chọn một tài khoản trong danh sách trước khi nhấn 'Sửa'")
         return
 
-    # Kiểm tra xem PK đã được điền và khóa (tức là đã ở chế độ xem)
-    if not entry_tendangnhap.get():
+    if not widgets['entry_tendangnhap'].get():
          messagebox.showwarning("Lỗi", "Không tìm thấy Tên đăng nhập. Vui lòng chọn lại.")
          return
 
-    # Mở khóa các ô nhập liệu khác
-    set_form_state(is_enabled=True)
-    entry_tendangnhap.config(state='disabled') # Giữ PK khóa
-    entry_matkhau.focus() 
+    set_form_state(is_enabled=True, widgets=widgets)
+    widgets['entry_tendangnhap'].config(state='disabled')
+    widgets['entry_matkhau'].focus() 
 
-def luu_taikhoan_da_sua():
+def luu_taikhoan_da_sua(widgets):
     """(LOGIC SỬA) Lưu thay đổi (UPDATE) sau khi sửa."""
-    tendn = entry_tendangnhap.get()
+    tendn = widgets['entry_tendangnhap'].get()
     if not tendn:
         messagebox.showwarning("Thiếu dữ liệu", "Không có Tên đăng nhập để cập nhật")
         return False
 
     try:
-        matkhau_moi = entry_matkhau.get()
-        manv = cbb_nhanvien_var.get().split(' - ')[0]
-        vaitro = cbb_vaitro_var.get()
+        matkhau_moi = widgets['entry_matkhau'].get()
+        manv = widgets['cbb_nhanvien_var'].get().split(' - ')[0]
+        vaitro = widgets['cbb_vaitro_var'].get()
     except Exception as e:
         messagebox.showerror("Lỗi định dạng", f"Dữ liệu nhập không hợp lệ (chưa chọn nhân viên?): {e}")
         return False
 
-    conn = connect_db()
+    conn = utils.connect_db() # <-- SỬA
     if conn is None: return False
         
     try:
         cur = conn.cursor()
         
-        # CÓ cập nhật mật khẩu
         if matkhau_moi != PASSWORD_PLACEHOLDER and matkhau_moi:
             hashed_mk_moi = hash_password(matkhau_moi)
             sql = "UPDATE TaiKhoan SET MatKhau = ?, MaNhanVien = ?, VaiTro = ? WHERE TenDangNhap = ?"
             cur.execute(sql, (hashed_mk_moi, manv, vaitro, tendn))
-        # KHÔNG cập nhật mật khẩu
         else: 
             sql = "UPDATE TaiKhoan SET MaNhanVien = ?, VaiTro = ? WHERE TenDangNhap = ?"
             cur.execute(sql, (manv, vaitro, tendn))
@@ -306,38 +256,31 @@ def luu_taikhoan_da_sua():
         messagebox.showinfo("Thành công", "Đã cập nhật tài khoản")
         return True
         
-    except pyodbc.Error as e:
-        conn.rollback()
-        messagebox.showerror("Lỗi SQL", f"Không thể cập nhật:\n{str(e)}")
-        return False
     except Exception as e:
         conn.rollback()
-        messagebox.showerror("Lỗi không xác định", f"Lỗi: {str(e)}")
+        messagebox.showerror("Lỗi SQL", f"Không thể cập nhật:\n{str(e)}")
         return False
     finally:
         if conn: conn.close()
 
-def save_data():
+def save_data(widgets):
     """Lưu dữ liệu, tự động kiểm tra xem nên Thêm mới (INSERT) hay Cập nhật (UPDATE)."""
-    # Nếu Tên đăng nhập bị khóa (state='disabled') -> Sửa
-    if entry_tendangnhap.cget('state') == 'disabled' and entry_tendangnhap.get():
-        success = luu_taikhoan_da_sua()
-    # Nếu Tên đăng nhập đang mở (state='normal') -> Thêm
+    if widgets['entry_tendangnhap'].cget('state') == 'disabled' and widgets['entry_tendangnhap'].get():
+        success = luu_taikhoan_da_sua(widgets)
     else:
-        success = them_taikhoan()
+        success = them_taikhoan(widgets)
     
     if success:
-        load_data()
+        load_data(widgets)
 
-def xoa_taikhoan():
+def xoa_taikhoan(widgets):
     """Xóa tài khoản được chọn."""
-    selected = tree.selection()
+    selected = widgets['tree'].selection()
     if not selected:
         messagebox.showwarning("Chưa chọn", "Hãy chọn một tài khoản để xóa")
         return
-
-    # Lấy PK từ ô nhập liệu (đã được điền bởi on_item_select)
-    tendn = entry_tendangnhap.get() 
+ 
+    tendn = widgets['entry_tendangnhap'].get() 
     
     if not tendn:
         messagebox.showwarning("Lỗi", "Không tìm thấy Tên đăng nhập. Vui lòng chọn lại.")
@@ -346,250 +289,153 @@ def xoa_taikhoan():
     if not messagebox.askyesno("Xác nhận", f"Bạn có chắc chắn muốn xóa tài khoản '{tendn}'?"):
         return
 
-    conn = connect_db()
+    conn = utils.connect_db() # <-- SỬA
     if conn is None: return
         
     try:
         cur = conn.cursor()
         cur.execute("DELETE FROM TaiKhoan WHERE TenDangNhap=?", (tendn,))
         conn.commit()
-        
         messagebox.showinfo("Thành công", "Đã xóa tài khoản thành công")
-        load_data()
+        load_data(widgets)
         
-    except pyodbc.Error as e:
-        conn.rollback()
-        messagebox.showerror("Lỗi SQL", f"Không thể xóa:\n{str(e)}")
     except Exception as e:
         conn.rollback()
-        messagebox.showerror("Lỗi không xác định", f"Lỗi: {str(e)}")
+        messagebox.showerror("Lỗi SQL", f"Không thể xóa:\n{str(e)}")
     finally:
         if conn: conn.close()
 
 # ================================================================
-# PHẦN 4: THIẾT KẾ GIAO DIỆN (Bản Light Mode)
+# PHẦN 4: HÀM TẠO TRANG (HÀM CHÍNH ĐỂ MAIN.PY GỌI)
 # ================================================================
 
-root = tk.Tk()
-root.title("Quản lý Tài khoản (Database QL_VanTai)")
-root.config(bg=theme_colors["bg_main"]) 
+def create_page(master):
+    """
+    Hàm này được main.py gọi. 
+    Nó tạo ra toàn bộ nội dung trang và đặt vào 'master' (là main_frame).
+    """
+    
+    # 1. TẠO FRAME CHÍNH
+    page_frame = ttk.Frame(master, style="TFrame")
+    
+    # === CÀI ĐẶT STYLE (CHỈ CẦN 1 DÒNG) ===
+    utils.setup_theme(page_frame) 
+    # ==================================
+    
+    # 2. TẠO GIAO DIỆN (ĐẶT VÀO 'page_frame')
+    lbl_title = ttk.Label(page_frame, text="QUẢN LÝ TÀI KHOẢN", style="Title.TLabel")
+    lbl_title.pack(pady=15) 
 
-def center_window(w, h):
-    """Hàm căn giữa cửa sổ."""
-    ws = root.winfo_screenwidth()
-    hs = root.winfo_screenheight()
-    x = (ws/2) - (w/2)
-    y = (hs/2) - (h/2)
-    root.geometry('%dx%d+%d+%d' % (w, h, x, y))
+    frame_info = ttk.Frame(page_frame, style="TFrame")
+    frame_info.pack(pady=5, padx=20, fill="x")
 
-center_window(900, 600) 
-root.resizable(False, False)
+    # --- Hàng 1 ---
+    ttk.Label(frame_info, text="Tên đăng nhập:").grid(row=0, column=0, padx=5, pady=8, sticky="w")
+    entry_tendangnhap = ttk.Entry(frame_info, width=30)
+    entry_tendangnhap.grid(row=0, column=1, padx=5, pady=8, sticky="w")
 
-# === CÀI ĐẶT STYLE (QUAN TRỌNG) ===
-style = ttk.Style(root)
-style.theme_use("clam") 
+    ttk.Label(frame_info, text="Mật khẩu:").grid(row=0, column=2, padx=15, pady=8, sticky="w")
+    entry_matkhau = ttk.Entry(frame_info, width=30, show="*") 
+    entry_matkhau.grid(row=0, column=3, padx=5, pady=8, sticky="w")
 
-# --- Cấu hình chung ---
-style.configure(".", 
-    background=theme_colors["bg_main"],
-    foreground=theme_colors["text"],
-    fieldbackground=theme_colors["bg_entry"],
-    bordercolor="#ACACAC", 
-    lightcolor=theme_colors["bg_main"],
-    darkcolor=theme_colors["bg_main"]
-)
-# --- Frame ---
-style.configure("TFrame", 
-    background=theme_colors["bg_main"]
-)
-# --- Label ---
-style.configure("TLabel", 
-    background=theme_colors["bg_main"],
-    foreground=theme_colors["text"],
-    font=("Segoe UI", 10)
-)
-style.configure("Title.TLabel", 
-    background=theme_colors["bg_main"],
-    foreground=theme_colors["accent"], 
-    font=("Segoe UI", 20, "bold")
-)
-style.configure("Header.TLabel", 
-    background=theme_colors["bg_main"],
-    foreground=theme_colors["text"], 
-    font=("Segoe UI", 11, "bold")
-)
-# --- Entry và Combobox ---
-style.configure("TEntry",
-    font=("Segoe UI", 10),
-    fieldbackground=theme_colors["bg_entry"],
-    foreground=theme_colors["text"],
-    insertcolor=theme_colors["text"] 
-)
-style.map("TEntry",
-    fieldbackground=[('disabled', theme_colors["disabled_bg"])],
-    foreground=[('disabled', theme_colors["text_disabled"])]
-)
-style.configure("TCombobox",
-    font=("Segoe UI", 10),
-    fieldbackground=theme_colors["bg_entry"],
-    background=theme_colors["bg_entry"],
-    foreground=theme_colors["text"]
-)
-root.option_add("*TCombobox*Listbox*background", theme_colors["bg_entry"])
-root.option_add("*TCombobox*Listbox*foreground", theme_colors["text"])
-root.option_add("*TCombobox*Listbox*selectBackground", theme_colors["accent"])
-root.option_add("*TCombobox*Listbox*selectForeground", theme_colors["accent_text"])
-style.map("TCombobox",
-    fieldbackground=[('disabled', theme_colors["disabled_bg"])],
-    foreground=[('disabled', theme_colors["text_disabled"])]
-)
-# --- Button ---
-style.configure("TButton",
-    background=theme_colors["accent"],
-    foreground=theme_colors["accent_text"],
-    font=("Segoe UI", 10, "bold"),
-    padding=5,
-    relief="flat",
-    bordercolor=theme_colors["accent"]
-)
-style.map("TButton",
-    background=[('active', theme_colors["accent_active"])] 
-)
-# --- Treeview (Bảng) ---
-style.configure("Treeview",
-    background=theme_colors["bg_entry"],
-    foreground=theme_colors["text"],
-    fieldbackground=theme_colors["bg_entry"],
-    rowheight=25, 
-    font=("Segoe UI", 10)
-)
-style.map("Treeview",
-    background=[('selected', theme_colors["accent"])], 
-    foreground=[('selected', theme_colors["accent_text"])]
-)
-style.configure("Treeview.Heading",
-    background=theme_colors["accent"],
-    foreground=theme_colors["accent_text"],
-    font=("Segoe UI", 10, "bold"),
-    relief="flat"
-)
-style.map("Treeview.Heading",
-    background=[('active', theme_colors["accent_active"])]
-)
-# --- Scrollbar ---
-style.configure("Vertical.TScrollbar", 
-    background=theme_colors["bg_entry"],
-    troughcolor=theme_colors["bg_main"],
-    arrowcolor=theme_colors["text"]
-)
-style.map("Vertical.TScrollbar",
-    background=[('active', "#C0C0C0")]
-)
-style.configure("Horizontal.TScrollbar", 
-    background=theme_colors["bg_entry"],
-    troughcolor=theme_colors["bg_main"],
-    arrowcolor=theme_colors["text"]
-)
-style.map("Horizontal.TScrollbar",
-    background=[('active', "#C0C0C0")]
-)
-# ==================================
+    # --- Hàng 2 ---
+    ttk.Label(frame_info, text="Nhân viên:").grid(row=1, column=0, padx=5, pady=8, sticky="w")
+    cbb_nhanvien_var = tk.StringVar()
+    cbb_nhanvien = ttk.Combobox(frame_info, textvariable=cbb_nhanvien_var, width=28, state='readonly')
+    cbb_nhanvien.grid(row=1, column=1, padx=5, pady=8, sticky="w")
+    cbb_nhanvien['values'] = utils.load_nhanvien_combobox() # <-- SỬA
 
+    ttk.Label(frame_info, text="Vai trò:").grid(row=1, column=2, padx=15, pady=8, sticky="w")
+    vaitro_options = ["Admin", "TaiXe"]
+    cbb_vaitro_var = tk.StringVar()
+    cbb_vaitro = ttk.Combobox(frame_info, textvariable=cbb_vaitro_var, values=vaitro_options, width=28, state='readonly')
+    cbb_vaitro.grid(row=1, column=3, padx=5, pady=8, sticky="w")
+    cbb_vaitro.set("TaiXe")
 
-lbl_title = ttk.Label(root, text="QUẢN LÝ TÀI KHOẢN", style="Title.TLabel")
-lbl_title.pack(pady=15) 
+    frame_info.columnconfigure(1, weight=1)
+    frame_info.columnconfigure(3, weight=1)
+    
+    # ===== Frame nút (SỬA LỖI: Đưa lên TRƯỚC Bảng) =====
+    frame_btn = ttk.Frame(page_frame, style="TFrame")
+    frame_btn.pack(pady=15)
 
-# Frame thông tin
-frame_info = ttk.Frame(root, style="TFrame")
-frame_info.pack(pady=5, padx=20, fill="x")
+    # ===== Bảng danh sách (SỬA LỖI: Đưa xuống DƯỚI nút) =====
+    lbl_ds = ttk.Label(page_frame, text="Danh sách tài khoản (Không hiển thị mật khẩu)", style="Header.TLabel")
+    lbl_ds.pack(pady=(10, 5), padx=20, anchor="w")
 
-# --- Hàng 1 ---
-ttk.Label(frame_info, text="Tên đăng nhập:").grid(row=0, column=0, padx=5, pady=8, sticky="w")
-entry_tendangnhap = ttk.Entry(frame_info, width=30)
-entry_tendangnhap.grid(row=0, column=1, padx=5, pady=8, sticky="w")
+    frame_tree = ttk.Frame(page_frame, style="TFrame")
+    frame_tree.pack(pady=10, padx=20, fill="both", expand=True) # expand=True ở cuối
 
-ttk.Label(frame_info, text="Mật khẩu:").grid(row=0, column=2, padx=15, pady=8, sticky="w")
-entry_matkhau = ttk.Entry(frame_info, width=30, show="*") # Giữ show="*"
-entry_matkhau.grid(row=0, column=3, padx=5, pady=8, sticky="w")
+    scrollbar_y = ttk.Scrollbar(frame_tree, orient=tk.VERTICAL, style="Vertical.TScrollbar")
+    scrollbar_x = ttk.Scrollbar(frame_tree, orient=tk.HORIZONTAL, style="Horizontal.TScrollbar")
 
-# --- Hàng 2 ---
-ttk.Label(frame_info, text="Nhân viên:").grid(row=1, column=0, padx=5, pady=8, sticky="w")
-cbb_nhanvien_var = tk.StringVar()
-cbb_nhanvien = ttk.Combobox(frame_info, textvariable=cbb_nhanvien_var, width=28, state='readonly')
-cbb_nhanvien.grid(row=1, column=1, padx=5, pady=8, sticky="w")
-cbb_nhanvien['values'] = load_nhanvien_combobox()
+    columns = ("tendn", "manv", "hoten", "vaitro")
+    tree = ttk.Treeview(frame_tree, columns=columns, show="headings", height=10,
+                        yscrollcommand=scrollbar_y.set, xscrollcommand=scrollbar_x.set)
 
-ttk.Label(frame_info, text="Vai trò:").grid(row=1, column=2, padx=15, pady=8, sticky="w")
-vaitro_options = ["Admin", "TaiXe"]
-cbb_vaitro_var = tk.StringVar()
-cbb_vaitro = ttk.Combobox(frame_info, textvariable=cbb_vaitro_var, values=vaitro_options, width=28, state='readonly')
-cbb_vaitro.grid(row=1, column=3, padx=5, pady=8, sticky="w")
-cbb_vaitro.set("TaiXe")
+    scrollbar_y.config(command=tree.yview)
+    scrollbar_x.config(command=tree.xview)
+    scrollbar_y.pack(side=tk.RIGHT, fill=tk.Y)
+    scrollbar_x.pack(side=tk.BOTTOM, fill=tk.X)
 
-# Cấu hình grid co giãn
-frame_info.columnconfigure(1, weight=1)
-frame_info.columnconfigure(3, weight=1)
+    tree.heading("tendn", text="Tên đăng nhập")
+    tree.column("tendn", width=150)
+    tree.heading("manv", text="Mã NV")
+    tree.column("manv", width=100, anchor="center")
+    tree.heading("hoten", text="Họ Tên Nhân Viên")
+    tree.column("hoten", width=200)
+    tree.heading("vaitro", text="Vai trò")
+    tree.column("vaitro", width=100, anchor="center")
 
-# ===== Frame nút (Đã cập nhật command) =====
-frame_btn = ttk.Frame(root, style="TFrame")
-frame_btn.pack(pady=15)
+    tree.pack(fill="both", expand=True)
+    
+    # 3. TẠO TỪ ĐIỂN 'widgets'
+    widgets = {
+        "tree": tree,
+        "entry_tendangnhap": entry_tendangnhap,
+        "entry_matkhau": entry_matkhau,
+        "cbb_nhanvien": cbb_nhanvien,
+        "cbb_vaitro": cbb_vaitro,
+        "cbb_nhanvien_var": cbb_nhanvien_var,
+        "cbb_vaitro_var": cbb_vaitro_var
+    }
 
-btn_them = ttk.Button(frame_btn, text="Thêm", width=8, command=clear_input)
-btn_them.grid(row=0, column=0, padx=10)
+    # (Code tạo nút bây giờ nằm trong frame_btn ở trên)
+    btn_them = ttk.Button(frame_btn, text="Thêm", width=8, command=lambda: clear_input(widgets))
+    btn_them.grid(row=0, column=0, padx=10)
+    btn_luu = ttk.Button(frame_btn, text="Lưu", width=8, command=lambda: save_data(widgets)) 
+    btn_luu.grid(row=0, column=1, padx=10)
+    btn_sua = ttk.Button(frame_btn, text="Sửa", width=8, command=lambda: chon_taikhoan_de_sua(widgets)) 
+    btn_sua.grid(row=0, column=2, padx=10)
+    btn_huy = ttk.Button(frame_btn, text="Hủy", width=8, command=lambda: load_data(widgets)) 
+    btn_huy.grid(row=0, column=3, padx=10)
+    btn_xoa = ttk.Button(frame_btn, text="Xóa", width=8, command=lambda: xoa_taikhoan(widgets))
+    btn_xoa.grid(row=0, column=4, padx=10)
+    # (Bỏ nút Thoát)
+    
+    # 4. KẾT NỐI BINDING
+    tree.bind("<<TreeviewSelect>>", lambda event: on_item_select(event, widgets)) 
 
-btn_luu = ttk.Button(frame_btn, text="Lưu", width=8, command=save_data) # SỬ DỤNG HÀM MỚI
-btn_luu.grid(row=0, column=1, padx=10)
-
-btn_sua = ttk.Button(frame_btn, text="Sửa", width=8, command=chon_taikhoan_de_sua) 
-btn_sua.grid(row=0, column=2, padx=10)
-
-btn_huy = ttk.Button(frame_btn, text="Hủy", width=8, command=load_data) # HỦY là tải lại dữ liệu
-btn_huy.grid(row=0, column=3, padx=10)
-
-btn_xoa = ttk.Button(frame_btn, text="Xóa", width=8, command=xoa_taikhoan)
-btn_xoa.grid(row=0, column=4, padx=10)
-
-btn_thoat = ttk.Button(frame_btn, text="Thoát", width=8, command=root.quit)
-btn_thoat.grid(row=0, column=5, padx=10)
-
-
-# ===== Bảng danh sách =====
-lbl_ds = ttk.Label(root, text="Danh sách tài khoản (Không hiển thị mật khẩu)", style="Header.TLabel")
-lbl_ds.pack(pady=(10, 5), padx=20, anchor="w")
-
-frame_tree = ttk.Frame(root, style="TFrame")
-frame_tree.pack(pady=10, padx=20, fill="both", expand=True)
-
-scrollbar_y = ttk.Scrollbar(frame_tree, orient=tk.VERTICAL, style="Vertical.TScrollbar")
-scrollbar_x = ttk.Scrollbar(frame_tree, orient=tk.HORIZONTAL, style="Horizontal.TScrollbar")
-
-columns = ("tendn", "manv", "hoten", "vaitro")
-tree = ttk.Treeview(frame_tree, columns=columns, show="headings", height=10,
-                    yscrollcommand=scrollbar_y.set, xscrollcommand=scrollbar_x.set)
-
-scrollbar_y.config(command=tree.yview)
-scrollbar_x.config(command=tree.xview)
-
-scrollbar_y.pack(side=tk.RIGHT, fill=tk.Y)
-scrollbar_x.pack(side=tk.BOTTOM, fill=tk.X)
-
-# Định nghĩa các cột
-tree.heading("tendn", text="Tên đăng nhập")
-tree.column("tendn", width=150)
-tree.heading("manv", text="Mã NV")
-tree.column("manv", width=100, anchor="center")
-tree.heading("hoten", text="Họ Tên Nhân Viên")
-tree.column("hoten", width=200)
-tree.heading("vaitro", text="Vai trò")
-tree.column("vaitro", width=100, anchor="center")
-
-tree.pack(fill="both", expand=True)
-
-# THÊM BINDING (SỰ KIỆN CLICK)
-tree.bind("<<TreeviewSelect>>", on_item_select) 
+    # 5. TẢI DỮ LIỆU LẦN ĐẦU
+    load_data(widgets) 
+    
+    # 6. TRẢ VỀ FRAME CHÍNH
+    return page_frame
 
 # ================================================================
-# PHẦN 5: CHẠY ỨNG DỤNG
+# PHẦN 5: CHẠY THỬ NGHIỆM
 # ================================================================
-load_data() 
-root.mainloop()
+if __name__ == "__main__":
+    
+    test_root = tk.Tk()
+    test_root.title("Test Quản lý Tài khoản")
+
+    # SỬA: Dùng hàm từ utils (cần import utils)
+    import utils 
+    
+    utils.center_window(test_root, 900, 600) 
+    
+    page = create_page(test_root) 
+    page.pack(fill="both", expand=True)
+    
+    test_root.mainloop()
