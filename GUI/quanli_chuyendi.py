@@ -10,7 +10,7 @@ import datetime as dt
 # PHẦN 2: CÁC HÀM TIỆN ÍCH (Tải Combobox)
 # ================================================================
 def load_taixe_combobox():
-    conn = utils.connect_db() # <-- SỬA
+    conn = utils.connect_db()
     if conn is None: return []
     try:
         cur = conn.cursor()
@@ -31,7 +31,7 @@ def load_taixe_combobox():
         if conn: conn.close()
 
 def load_xe_combobox():
-    conn = utils.connect_db() # <-- SỬA
+    conn = utils.connect_db()
     if conn is None: return []
     try:
         cur = conn.cursor()
@@ -78,7 +78,7 @@ def set_form_state(is_enabled, widgets):
         widgets['entry_giobd'].config(state='normal')
         widgets['date_kt'].config(state='normal')
         widgets['entry_giokt'].config(state='normal')
-        widgets['cbb_trangthai'].config(state='readonly')
+        widgets['cbb_trangthai'].config(state='disabled')
     else:
         widgets['cbb_taixe'].config(state='disabled')
         widgets['cbb_xe'].config(state='disabled')
@@ -117,7 +117,6 @@ def clear_input(widgets):
     if widgets['tree'].selection():
         widgets['tree'].selection_remove(widgets['tree'].selection()[0])
 
-# === SỬA HÀM NÀY ===
 def load_data(widgets, user_role, user_username):
     """Tải dữ liệu ChuyenDi (lọc theo vai trò) VÀ LÀM MỜ FORM (nếu là Admin)."""
     tree = widgets['tree']
@@ -133,23 +132,23 @@ def load_data(widgets, user_role, user_username):
     try:
         cur = conn.cursor()
         
-        # === SỬA SQL ĐỂ LỌC THEO VAI TRÒ ===
+        # === SỬA SQL: Thêm cd.ThoiGianKetThuc ===
         sql = """
         SELECT 
             cd.MaChuyenDi, nv.HoVaTen, cd.BienSoXe, 
-            cd.ThoiGianBatDau, cd.TrangThai
+            cd.ThoiGianBatDau, cd.TrangThai, cd.ThoiGianKetThuc
         FROM ChuyenDi AS cd
         LEFT JOIN NhanVien AS nv ON cd.MaNhanVien = nv.MaNhanVien
         """
         
         params = []
         if user_role == "TaiXe":
-            manv = get_manv_from_username(user_username) # Lấy "NV001" từ "an.nv"
+            manv = get_manv_from_username(user_username) 
             if manv:
                 sql += " WHERE cd.MaNhanVien = ?"
                 params.append(manv)
             else:
-                sql += " WHERE 1=0" # Không hiển thị gì nếu không tìm thấy Mã NV
+                sql += " WHERE 1=0" 
         
         sql += " ORDER BY cd.ThoiGianBatDau DESC"
         
@@ -165,7 +164,11 @@ def load_data(widgets, user_role, user_username):
             tg_bd = row[3].strftime("%Y-%m-%d %H:%M") if row[3] else "N/A"
             trangthai_text = trangthai_map.get(row[4], "Không rõ")
             
-            tree.insert("", tk.END, values=(ma_cd, ten_tx, bienso, tg_bd, trangthai_text))
+            # === SỬA: Lấy thêm tg_ketthuc (row[5]) ===
+            tg_kt = row[5].strftime("%Y-%m-%d %H:%M") if row[5] else "Đang đi"
+            
+            # === SỬA: Thêm tg_kt vào values ===
+            tree.insert("", tk.END, values=(ma_cd, ten_tx, bienso, tg_bd, tg_kt, trangthai_text))
             
         children = tree.get_children()
         if children:
@@ -173,7 +176,7 @@ def load_data(widgets, user_role, user_username):
             tree.selection_set(first_item) 
             tree.focus(first_item)         
             tree.event_generate("<<TreeviewSelect>>") 
-        elif user_role == "Admin": # Nếu là Admin và không có dữ liệu
+        elif user_role == "Admin": 
             set_form_state(is_enabled=True, widgets=widgets)
             clear_input(widgets) 
             
@@ -183,7 +186,6 @@ def load_data(widgets, user_role, user_username):
         if conn:
             conn.close()
         
-        # SỬA: Chỉ Admin mới có form để tắt
         if user_role == "Admin":
             set_form_state(is_enabled=False, widgets=widgets)
 
@@ -195,15 +197,12 @@ def them_chuyendi(widgets):
         diembd = widgets['entry_diembd'].get()
         diemkt = widgets['entry_diemkt'].get()
         
+        # === SỬA LOGIC THỜI GIAN ===
+        # Chỉ lấy ngày, không lấy giờ. Giờ sẽ NULL cho đến khi tài xế bắt đầu
         ngay_bd_str = widgets['date_bd'].get_date().strftime('%Y-%m-%d')
-        gio_bd_str = widgets['entry_giobd'].get() or "00:00"
-        tg_batdau = f"{ngay_bd_str} {gio_bd_str}:00"
+        tg_batdau = ngay_bd_str # <--- CHỈ LƯU NGÀY
         
-        ngay_kt_str = widgets['date_kt'].get_date().strftime('%Y-%m-%d')
-        gio_kt_str = widgets['entry_giokt'].get()
-        tg_ketthuc = None
-        if gio_kt_str: 
-            tg_ketthuc = f"{ngay_kt_str} {gio_kt_str}:00"
+        tg_ketthuc = None # Luôn là NULL khi mới tạo
         
         trangthai_text = widgets['cbb_trangthai_var'].get()
         trangthai_map = {"Đã gán": 0, "Đang thực hiện": 1, "Hoàn thành": 2, "Hủy": 3}
@@ -217,7 +216,7 @@ def them_chuyendi(widgets):
         messagebox.showerror("Lỗi định dạng", f"Dữ liệu nhập không hợp lệ: {e}")
         return False
 
-    conn = utils.connect_db() # <-- SỬA
+    conn = utils.connect_db() 
     if conn is None: return False
 
     try:
@@ -228,6 +227,8 @@ def them_chuyendi(widgets):
             ThoiGianBatDau, ThoiGianKetThuc, TrangThai
         ) VALUES (?, ?, ?, ?, ?, ?, ?)
         """
+        # === SỬA THAM SỐ ===
+        # tg_batdau bây giờ chỉ là ngày (hoặc NULL nếu bạn muốn, nhưng để ngày vẫn tốt hơn)
         cur.execute(sql, (manv, bienso, diembd, diemkt, tg_batdau, tg_ketthuc, trangthai_value))
         conn.commit()
         messagebox.showinfo("Thành công", "Đã thêm chuyến đi mới thành công")
@@ -240,7 +241,6 @@ def them_chuyendi(widgets):
     finally:
         if conn: conn.close()
 
-# === SỬA HÀM NÀY ===
 def on_item_select(event, widgets):
     """(SỰ KIỆN CLICK) Đổ dữ liệu lên form (nếu là Admin)."""
     
@@ -269,10 +269,8 @@ def on_item_select(event, widgets):
             messagebox.showerror("Lỗi", "Không tìm thấy dữ liệu chuyến đi.")
             return
 
-        # === PHẦN SỬA ĐỂ PHÂN QUYỀN ===
         user_role = widgets.get("user_role", "Admin") 
 
-        # Chỉ Admin mới được bật form
         if user_role == "Admin":
             set_form_state(is_enabled=True, widgets=widgets)
             
@@ -297,12 +295,11 @@ def on_item_select(event, widgets):
         widgets['entry_diemkt'].insert(0, data.DiemKetThuc or "")
         
         if data.ThoiGianBatDau:
-            widgets['date_bd'].set_date(data.ThoiGianBatDau.strftime("%Y-%m-%d"))
+            widgets['date_bd'].set_date(data.ThoiGianBatDau) # <--- SỬA
             widgets['entry_giobd'].insert(0, data.ThoiGianBatDau.strftime("%H:%M"))
         if data.ThoiGianKetThuc:
-            widgets['date_kt'].set_date(data.ThoiGianKetThuc.strftime("%Y-%m-%d"))
+            widgets['date_kt'].set_date(data.ThoiGianKetThuc) # <--- SỬA
             widgets['entry_giokt'].insert(0, data.ThoiGianKetThuc.strftime("%H:%M"))
-
         trangthai_map = {0: "Đã gán", 1: "Đang thực hiện", 2: "Hoàn thành", 3: "Hủy"}
         widgets['cbb_trangthai'].set(trangthai_map.get(data.TrangThai, "Đã gán"))
 
@@ -312,13 +309,11 @@ def on_item_select(event, widgets):
         if conn: conn.close()
         widgets['entry_machuyendi'].config(state='disabled') 
         
-        # === PHẦN SỬA ĐỂ PHÂN QUYỀN ===
         user_role = widgets.get("user_role", "Admin")
         if user_role == "Admin":
             set_form_state(is_enabled=False, widgets=widgets)
 
 def chon_chuyendi_de_sua(widgets): 
-    # (Hàm này giữ nguyên)
     selected = widgets['tree'].selection()
     if not selected:
         messagebox.showwarning("Chưa chọn", "Hãy chọn một chuyến đi trong danh sách trước khi nhấn 'Sửa'")
@@ -331,7 +326,7 @@ def chon_chuyendi_de_sua(widgets):
     widgets['cbb_taixe'].focus() 
 
 def luu_chuyendi_da_sua(widgets):
-    # (Hàm này giữ nguyên)
+    """(LOGIC SỬA) Lưu thay đổi (UPDATE) sau khi sửa."""
     machuyendi = widgets['entry_machuyendi'].get()
     if not machuyendi:
         messagebox.showwarning("Thiếu dữ liệu", "Không có Mã chuyến đi để cập nhật")
@@ -343,15 +338,13 @@ def luu_chuyendi_da_sua(widgets):
         diembd = widgets['entry_diembd'].get()
         diemkt = widgets['entry_diemkt'].get()
         
+        # === SỬA LOGIC THỜI GIAN ===
         ngay_bd_str = widgets['date_bd'].get_date().strftime('%Y-%m-%d')
-        gio_bd_str = widgets['entry_giobd'].get() or "00:00"
-        tg_batdau = f"{ngay_bd_str} {gio_bd_str}:00"
-        
-        ngay_kt_str = widgets['date_kt'].get_date().strftime('%Y-%m-%d')
-        gio_kt_str = widgets['entry_giokt'].get()
-        tg_ketthuc = None
-        if gio_kt_str: 
-            tg_ketthuc = f"{ngay_kt_str} {gio_kt_str}:00"
+        tg_batdau = ngay_bd_str # <--- CHỈ LƯU NGÀY
+
+        # Lấy thời gian kết thúc từ CSDL (nếu tài xế đã hoàn thành)
+        # Chúng ta không cho Admin sửa thời gian kết thúc nữa
+        # tg_ketthuc = None (Bỏ qua)
         
         trangthai_text = widgets['cbb_trangthai_var'].get()
         trangthai_map = {"Đã gán": 0, "Đang thực hiện": 1, "Hoàn thành": 2, "Hủy": 3}
@@ -365,20 +358,23 @@ def luu_chuyendi_da_sua(widgets):
         messagebox.showerror("Lỗi định dạng", f"Dữ liệu nhập không hợp lệ: {e}")
         return False
 
-    conn = utils.connect_db() # <-- SỬA
+    conn = utils.connect_db()
     if conn is None: return False
         
     try:
         cur = conn.cursor()
+        
+        # === SỬA SQL UPDATE ===
+        # Bỏ ThoiGianKetThuc ra khỏi lệnh UPDATE của Admin
         sql = """
         UPDATE ChuyenDi SET 
             MaNhanVien = ?, BienSoXe = ?, DiemBatDau = ?, DiemKetThuc = ?,
-            ThoiGianBatDau = ?, ThoiGianKetThuc = ?, TrangThai = ?
+            ThoiGianBatDau = ?, TrangThai = ?
         WHERE MaChuyenDi = ?
         """
         cur.execute(sql, (
             manv, bienso, diembd, diemkt, 
-            tg_batdau, tg_ketthuc, trangthai_value,
+            tg_batdau, trangthai_value, # <--- BỎ tg_ketthuc
             machuyendi
         ))
         conn.commit()
@@ -394,7 +390,6 @@ def luu_chuyendi_da_sua(widgets):
 
 def save_data(widgets):
     """Lưu dữ liệu, tự động kiểm tra xem nên Thêm mới (INSERT) hay Cập nhật (UPDATE)."""
-    # SỬA: Lấy vai trò và username từ widgets
     user_role = widgets.get("user_role", "Admin")
     user_username = widgets.get("user_username", "")
     
@@ -404,10 +399,9 @@ def save_data(widgets):
         success = them_chuyendi(widgets)
     
     if success:
-        load_data(widgets, user_role, user_username) # SỬA: Truyền vai trò khi tải lại
+        load_data(widgets, user_role, user_username) 
 
 def xoa_chuyendi_vinhvien(widgets):
-    # (Hàm này giữ nguyên)
     tree = widgets['tree']
     selected = tree.selection()
     if not selected:
@@ -423,37 +417,74 @@ def xoa_chuyendi_vinhvien(widgets):
     msg_xacnhan = (
         f"BẠN CÓ CHẮC CHẮN MUỐN XÓA VĨNH VIỄN CHUYẾN ĐI '{machuyendi}'?\n\n"
         "CẢNH BÁO: Thao tác này KHÔNG THỂ hoàn tác.\n"
-        "Tất cả Lịch sử nhiên liệu của chuyến đi này sẽ bị XÓA SẠCH."
     )
     if not messagebox.askyesno("XÁC NHẬN XÓA VĨNH VIỄN", msg_xacnhan):
         return
 
-    conn = utils.connect_db() # <-- SỬA
+    conn = utils.connect_db()
     if conn is None: return
         
     try:
         cur = conn.cursor()
         
-        # Giả sử CSDL không cho phép xóa ChuyenDi nếu NhatKyNhienLieu còn tồn tại
-        # Bạn cần xóa NhatKyNhienLieu trước (nếu có)
+        # Xóa các bản ghi tham chiếu trong NhatKyNhienLieu trước (nếu có)
+        # BẠN CẦN KIỂM TRA LẠI CSDL XEM CÓ KHÓA NGOẠI NÀY KHÔNG
         # cur.execute("DELETE FROM NhatKyNhienLieu WHERE MaChuyenDi=?", (machuyendi,))
         
         cur.execute("DELETE FROM ChuyenDi WHERE MaChuyenDi=?", (machuyendi,))
         conn.commit()
         messagebox.showinfo("Thành công", f"Đã xóa vĩnh viễn chuyến đi '{machuyendi}'.")
         
-        # SỬA: Tải lại dữ liệu
         user_role = widgets.get("user_role", "Admin")
         user_username = widgets.get("user_username", "")
         load_data(widgets, user_role, user_username)
             
     except Exception as e:
         conn.rollback()
-        messagebox.showerror("Lỗi SQL", f"Không thể xóa chuyến đi (Có thể do dữ liệu liên quan trong bảng Nhiên Liệu):\n{str(e)}")
+        messagebox.showerror("Lỗi SQL", f"Không thể xóa chuyến đi (Có thể do dữ liệu liên quan):\n{str(e)}")
     finally:
         if conn: conn.close()
 
-# === THÊM HÀM MỚI CHO TÀI XẾ ===
+# === CÁC HÀM CỦA TÀI XẾ ===
+def bat_dau_chuyen_di(widgets, user_username, user_role):
+    """(Tài xế) Cập nhật trạng thái chuyến đi thành 'Đang thực hiện'."""
+    
+    machuyendi = widgets['entry_machuyendi'].get()
+    if not machuyendi:
+        messagebox.showwarning("Chưa chọn", "Vui lòng chọn một chuyến đi từ danh sách.")
+        return
+
+    manv_dang_nhap = get_manv_from_username(user_username)
+    conn = utils.connect_db()
+    if conn is None: return
+
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT TrangThai, MaNhanVien FROM ChuyenDi WHERE MaChuyenDi = ?", (machuyendi,))
+        trip = cur.fetchone()
+
+        if not trip or trip.MaNhanVien != manv_dang_nhap:
+            messagebox.showerror("Lỗi", "Bạn không có quyền thao tác trên chuyến đi này.")
+            return
+        
+        if trip.TrangThai == 0: # 0 = "Đã gán"
+            if messagebox.askyesno("Xác nhận", "Bạn có muốn BẮT ĐẦU chuyến đi này?"):
+                sql_update = "UPDATE ChuyenDi SET TrangThai = 1, ThoiGianBatDau = GETDATE() WHERE MaChuyenDi = ?"             
+                cur.execute(sql_update, (machuyendi,))
+                conn.commit()
+                messagebox.showinfo("Thành công", "Bắt đầu chuyến đi.")
+        elif trip.TrangThai == 1:
+            messagebox.showinfo("Thông báo", "Chuyến đi này đang được thực hiện.")
+        else:
+            messagebox.showwarning("Không thể", "Chuyến đi đã hoàn thành.")
+
+    except Exception as e:
+        conn.rollback()
+        messagebox.showerror("Lỗi SQL", f"Không thể cập nhật:\n{str(e)}")
+    finally:
+        if conn: conn.close()
+        load_data(widgets, user_role, user_username)
+
 def xac_nhan_hoan_thanh(widgets, user_username, user_role):
     """(Tài xế) Xác nhận hoàn thành chuyến đi đang thực hiện."""
     
@@ -506,8 +537,51 @@ def xac_nhan_hoan_thanh(widgets, user_username, user_role):
         if conn: conn.close()
         load_data(widgets, user_role, user_username)
 
+def huy_chuyen_di(widgets, user_username, user_role):
+    """(Tài xế) Cập nhật trạng thái chuyến đi thành 'Hủy'."""
+    
+    machuyendi = widgets['entry_machuyendi'].get()
+    if not machuyendi:
+        messagebox.showwarning("Chưa chọn", "Vui lòng chọn một chuyến đi từ danh sách.")
+        return
+
+    manv_dang_nhap = get_manv_from_username(user_username)
+    conn = utils.connect_db()
+    if conn is None: return
+
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT TrangThai, MaNhanVien FROM ChuyenDi WHERE MaChuyenDi = ?", (machuyendi,))
+        trip = cur.fetchone()
+
+        if not trip or trip.MaNhanVien != manv_dang_nhap:
+            messagebox.showerror("Lỗi", "Bạn không có quyền thao tác trên chuyến đi này.")
+            return
+        
+        if trip.TrangThai in [0, 1]: # Có thể hủy khi "Đã gán" hoặc "Đang thực hiện"
+            if messagebox.askyesno("XÁC NHẬN HỦY", "Bạn có chắc chắn muốn HỦY chuyến đi này? Thao tác này không thể hoàn tác.", icon='warning'):
+                sql_update = "UPDATE ChuyenDi SET TrangThai = 3 WHERE MaChuyenDi = ?"
+                cur.execute(sql_update, (machuyendi,))
+                conn.commit()
+                messagebox.showinfo("Thành công", "Đã hủy chuyến đi.")
+        elif trip.TrangThai == 3:
+            messagebox.showinfo("Thông báo", "Chuyến đi này đã bị hủy từ trước.")
+        else: # trip.TrangThai == 2 (Hoàn thành)
+            messagebox.showwarning("Không thể", "Không thể hủy chuyến đi đã 'Hoàn thành'.")
+
+    except Exception as e:
+        conn.rollback()
+        messagebox.showerror("Lỗi SQL", f"Không thể cập nhật:\n{str(e)}")
+    finally:
+        if conn: conn.close()
+        load_data(widgets, user_role, user_username)
+
 # ================================================================
 # PHẦN 4: HÀM TẠO TRANG (SỬA ĐỂ PHÂN QUYỀN)
+# ================================================================
+
+# ================================================================
+# PHẦN 4: HÀM TẠO TRANG (SỬA ĐỂ PHÂN QUYỀN VÀ BỎ Ô GIỜ)
 # ================================================================
 
 def create_page(master, user_role, user_username): # <-- SỬA SIGNATURE
@@ -520,6 +594,23 @@ def create_page(master, user_role, user_username): # <-- SỬA SIGNATURE
     page_frame = ttk.Frame(master, style="TFrame")
     utils.setup_theme(page_frame) 
     
+    # === THÊM STYLE CHO NÚT HỦY (MÀU ĐỎ) ===
+    try:
+        style = ttk.Style()
+        danger_color = "#DC3545" # Màu đỏ bootstrap
+        danger_active = "#B02A37"
+        style.configure("Danger.TButton", 
+                        font=("Calibri", 11, "bold"),
+                        background=danger_color, 
+                        foreground="white",
+                        relief="flat",
+                        padding=5)
+        style.map("Danger.TButton",
+                  background=[('active', danger_active)],
+                  relief=[('pressed', 'sunken')])
+    except Exception as e:
+        print(f"Lỗi tạo style Danger.TButton: {e}")
+        
     # 2. TẠO GIAO DIỆN
     lbl_title = ttk.Label(page_frame, text="QUẢN LÝ CHUYẾN ĐI", style="Title.TLabel")
     lbl_title.pack(pady=15) 
@@ -539,6 +630,7 @@ def create_page(master, user_role, user_username): # <-- SỬA SIGNATURE
     cbb_trangthai = ttk.Combobox(frame_info, textvariable=cbb_trangthai_var, values=trangthai_options, width=38, state='readonly')
     cbb_trangthai.grid(row=0, column=3, padx=5, pady=8, sticky="w")
     cbb_trangthai.set("Đã gán")
+    
     # --- Hàng 2 ---
     ttk.Label(frame_info, text="Tài xế:").grid(row=1, column=0, padx=5, pady=8, sticky="w")
     cbb_taixe_var = tk.StringVar()
@@ -550,6 +642,7 @@ def create_page(master, user_role, user_username): # <-- SỬA SIGNATURE
     cbb_xe = ttk.Combobox(frame_info, textvariable=cbb_xe_var, width=38, state='readonly')
     cbb_xe.grid(row=1, column=3, padx=5, pady=8, sticky="w")
     cbb_xe['values'] = load_xe_combobox()
+    
     # --- Hàng 3 ---
     ttk.Label(frame_info, text="Điểm bắt đầu:").grid(row=2, column=0, padx=5, pady=8, sticky="w")
     entry_diembd = ttk.Entry(frame_info, width=30)
@@ -557,11 +650,12 @@ def create_page(master, user_role, user_username): # <-- SỬA SIGNATURE
     ttk.Label(frame_info, text="Điểm kết thúc:").grid(row=2, column=2, padx=15, pady=8, sticky="w")
     entry_diemkt = ttk.Entry(frame_info, width=40)
     entry_diemkt.grid(row=2, column=3, padx=5, pady=8, sticky="w")
-    # --- Hàng 4 (Thời gian) ---
-    frame_time = ttk.Frame(frame_info, style="TFrame")
-    frame_time.grid(row=3, column=0, columnspan=4, pady=10)
+
+    # ==================================
+    # === SỬA HÀNG 4 (THỜI GIAN) ===
+    # ==================================
     date_entry_style_options = {
-        'width': 12, 'date_pattern': 'yyyy-MM-dd',
+        'width': 28, 'date_pattern': 'yyyy-MM-dd', # Sửa width
         'background': utils.theme_colors["bg_entry"], 
         'foreground': utils.theme_colors["text"],
         'disabledbackground': utils.theme_colors["disabled_bg"],
@@ -572,18 +666,21 @@ def create_page(master, user_role, user_username): # <-- SỬA SIGNATURE
         'selectbackground': utils.theme_colors["accent"],
         'selectforeground': utils.theme_colors["accent_text"]
     }
-    ttk.Label(frame_time, text="Thời gian BĐ:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
-    date_bd = DateEntry(frame_time, **date_entry_style_options)
-    date_bd.grid(row=0, column=1, padx=5, pady=5, sticky="w")
-    ttk.Label(frame_time, text="Giờ BĐ (HH:MM):").grid(row=0, column=2, padx=5, pady=5, sticky="w")
-    entry_giobd = ttk.Entry(frame_time, width=10)
-    entry_giobd.grid(row=0, column=3, padx=5, pady=5, sticky="w")
-    ttk.Label(frame_time, text="Thời gian KT:").grid(row=0, column=4, padx=15, pady=5, sticky="w")
-    date_kt = DateEntry(frame_time, **date_entry_style_options)
-    date_kt.grid(row=0, column=5, padx=5, pady=5, sticky="w")
-    ttk.Label(frame_time, text="Giờ KT (HH:MM):").grid(row=0, column=6, padx=5, pady=5, sticky="w")
-    entry_giokt = ttk.Entry(frame_time, width=10)
-    entry_giokt.grid(row=0, column=7, padx=5, pady=5, sticky="w")
+
+    # Đặt date_bd vào hàng 3, cột 0 (thay cho hàng 4 cũ)
+    ttk.Label(frame_info, text="Ngày bắt đầu:").grid(row=3, column=0, padx=5, pady=8, sticky="w")
+    date_bd = DateEntry(frame_info, **date_entry_style_options)
+    date_bd.grid(row=3, column=1, padx=5, pady=8, sticky="w")
+
+    # Tạo các widget giả (để code không bị lỗi NameError ở dưới)
+    # Chúng không được hiển thị (pack/grid)
+    entry_giobd = ttk.Entry(frame_info)
+    date_kt = DateEntry(frame_info)
+    entry_giokt = ttk.Entry(frame_info)
+    # ==================================
+    # === KẾT THÚC SỬA HÀNG 4 ===
+    # ==================================
+
     frame_info.columnconfigure(1, weight=1)
     frame_info.columnconfigure(3, weight=1)
 
@@ -607,13 +704,13 @@ def create_page(master, user_role, user_username): # <-- SỬA SIGNATURE
     frame_tree.pack(pady=10, padx=20, fill="both", expand=True) 
     scrollbar_y = ttk.Scrollbar(frame_tree, orient=tk.VERTICAL, style="Vertical.TScrollbar")
     scrollbar_x = ttk.Scrollbar(frame_tree, orient=tk.HORIZONTAL, style="Horizontal.TScrollbar")
-    columns = ("ma_cd", "ten_tx", "bienso", "tg_bd", "trangthai")
+    columns = ("ma_cd", "ten_tx", "bienso", "tg_bd", "tg_kt", "trangthai")
     tree = ttk.Treeview(frame_tree, columns=columns, show="headings", height=10,
-                        yscrollcommand=scrollbar_y.set, xscrollcommand=scrollbar_x.set)
+                    yscrollcommand=scrollbar_y.set, xscrollcommand=scrollbar_x.set)
     scrollbar_y.config(command=tree.yview)
     scrollbar_x.config(command=tree.xview)
     scrollbar_y.pack(side=tk.RIGHT, fill=tk.Y)
-    scrollbar_x.pack(side=tk.BOTTOM, fill=tk.X)
+    scrollbar_x.pack(side=tk.BOTTOM, fill=tk.X) 
     tree.heading("ma_cd", text="Mã CĐ")
     tree.column("ma_cd", width=60, anchor="center")
     tree.heading("ten_tx", text="Tên Tài xế")
@@ -622,8 +719,11 @@ def create_page(master, user_role, user_username): # <-- SỬA SIGNATURE
     tree.column("bienso", width=100)
     tree.heading("tg_bd", text="Thời gian bắt đầu")
     tree.column("tg_bd", width=150)
+    tree.heading("tg_kt", text="Thời gian kết thúc")
+    tree.column("tg_kt", width=150)
     tree.heading("trangthai", text="Trạng thái")
     tree.column("trangthai", width=120, anchor="center")
+
     tree.pack(fill="both", expand=True)
     
     # 3. TẠO TỪ ĐIỂN 'widgets'
@@ -642,7 +742,6 @@ def create_page(master, user_role, user_username): # <-- SỬA SIGNATURE
         "cbb_taixe_var": cbb_taixe_var,
         "cbb_xe_var": cbb_xe_var,
         "cbb_trangthai_var": cbb_trangthai_var,
-        # SỬA: Thêm vai trò vào widgets
         "user_role": user_role,
         "user_username": user_username
     }
@@ -661,20 +760,35 @@ def create_page(master, user_role, user_username): # <-- SỬA SIGNATURE
         btn_xoa.grid(row=0, column=4, padx=10)
     
     if user_role == "TaiXe":
-        btn_hoan_thanh = ttk.Button(frame_taixe_btn, text="Xác nhận hoàn thành", 
+        # Nút 1: Bắt đầu (Màu xanh)
+        btn_bat_dau = ttk.Button(frame_taixe_btn, text="Bắt đầu thực hiện", 
+                                 style="Accent.TButton", 
+                                 command=lambda: bat_dau_chuyen_di(widgets, user_username, user_role)
+                                 )
+        btn_bat_dau.grid(row=0, column=0, padx=10, pady=5)
+        
+        # Nút 2: Hoàn thành (Màu xanh)
+        btn_hoan_thanh = ttk.Button(frame_taixe_btn, text="Xác nhận Hoàn Thành", 
                                      style="Accent.TButton",
-                                     command=lambda: xac_nhan_hoan_thanh(widgets, user_username, user_role))
-        btn_hoan_thanh.grid(row=0, column=0, padx=10)
+                                     command=lambda: xac_nhan_hoan_thanh(widgets, user_username, user_role)
+                                     )
+        btn_hoan_thanh.grid(row=0, column=1, padx=10, pady=5)
+        
+        # Nút 3: Hủy (Màu đỏ)
+        btn_huy_chuyen = ttk.Button(frame_taixe_btn, text="Hủy chuyến", 
+                                 style="Danger.TButton", 
+                                 command=lambda: huy_chuyen_di(widgets, user_username, user_role)
+                                 )
+        btn_huy_chuyen.grid(row=0, column=2, padx=10, pady=5)
 
     # 4. KẾT NỐI BINDING (SỰ KIỆN CLICK)
     tree.bind("<<TreeviewSelect>>", lambda event: on_item_select(event, widgets)) 
 
     # 5. TẢI DỮ LIỆU LẦN ĐẦU
-    load_data(widgets, user_role, user_username) # <-- SỬA: Truyền vai trò
+    load_data(widgets, user_role, user_username)
     
     # 6. TRẢ VỀ FRAME CHÍNH
     return page_frame
-
 # ================================================================
 # PHẦN 5: CHẠY THỬ NGHIỆM
 # ================================================================

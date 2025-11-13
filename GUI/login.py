@@ -9,32 +9,7 @@ import utils
 # ================================================================
 # KẾT NỐI CSDL (Giữ nguyên)
 # ================================================================
-def connect_db():
-    """Hàm kết nối đến CSDL SQL Server."""
-SERVER_ADDRESS = "localhost" 
-SERVER_PORT = "53590"       
-DATABASE_NAME = 'QL_VanTai'
-DRIVER_NAME = 'SQL Server'   
 
-CONNECTION_STRING = (
-    f"DRIVER={{{DRIVER_NAME}}};"
-    f"SERVER={SERVER_ADDRESS},{SERVER_PORT};" 
-    f"DATABASE={DATABASE_NAME};"
-    f"Trusted_Connection=yes;"
-)
-
-# NÂNG CẤP: Đổi tên hàm để tránh xung đột
-def connect_db_chuyendi():
-    """Hàm kết nối đến CSDL SQL Server."""
-    try:
-        conn = pyodbc.connect(CONNECTION_STRING)
-        return conn
-    except pyodbc.Error as e:
-        messagebox.showerror("Lỗi kết nối CSDL (Chuyến Đi)", f"Không thể kết nối đến SQL Server:\n{e}")
-        return None
-    except Exception as e:
-        messagebox.showerror("Lỗi không xác định", f"Lỗi: {str(e)}")
-        return None
 
 # ================================================================
 # HÀM XỬ LÝ ĐĂNG NHẬP (Giữ nguyên)

@@ -174,16 +174,21 @@ btn_xe = create_nav_button(left_nav_frame, "Quản lý Xe", "🚗",
 btn_taixe = create_nav_button(left_nav_frame, "Quản lý Tài Xế", "👤", 
                              lambda: show_page(quanli_taixe.create_page))
 btn_chuyendi = create_nav_button(left_nav_frame, "Quản lý Chuyến Đi", "🌐", 
-                        lambda: show_page(lambda master_frame: quanli_chuyendi.create_page(
-                            master_frame, 
-                            USER_ROLE, 
-                            USER_USERNAME
+    lambda: show_page(lambda master_frame: quanli_chuyendi.create_page(
+        master_frame, 
+        USER_ROLE, 
+        USER_USERNAME
     ))
 )
 btn_baotri = create_nav_button(left_nav_frame, "Lịch sử Bảo Trì", "🔧", 
-                                lambda: show_page(quanli_lichsubaotri.create_page))
+    lambda: show_page(quanli_lichsubaotri.create_page))
 btn_nhienlieu = create_nav_button(left_nav_frame, "Nhật ký Nhiên Liệu", "🧾", 
-                                  lambda: show_page(quanli_nhatkinguyenlieu.create_page))
+    lambda: show_page(lambda master_frame: quanli_nhatkinguyenlieu.create_page(
+        master_frame,
+        USER_ROLE,
+        USER_USERNAME
+    ))
+)
 btn_taikhoan_user = create_nav_button(left_nav_frame, "Tài khoản", "⚙️", 
                             lambda: show_page(lambda master_frame: thongtin_taikhoan.create_page(
                                     master_frame, 
