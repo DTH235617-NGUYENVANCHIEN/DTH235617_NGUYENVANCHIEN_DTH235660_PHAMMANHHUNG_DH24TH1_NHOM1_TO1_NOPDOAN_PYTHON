@@ -117,7 +117,7 @@ CSDL được thiết kế để chuẩn hóa và liên kết các nghiệp vụ
 
 * **Mục đích:** Xác thực người dùng và phân luồng nghiệp vụ.
 * **Luồng nghiệp vụ:**
-* 
+  
     1.   Người dùng nhập Tên đăng nhập và Mật khẩu.
   
     2.   Hệ thống băm (SHA-256) mật khẩu nhập vào.
@@ -141,7 +141,7 @@ CSDL được thiết kế để chuẩn hóa và liên kết các nghiệp vụ
 
 * **Mục đích:** Là giao diện điều hướng chính (container) cho tất cả các chức năng.
 * **Luồng nghiệp vụ (Phân quyền):**
-* 
+  
     1.   Khi form `main.py` được tải, nó nhận 2 tham số `USER_ROLE` và `USER_USERNAME`.
   
     2.   Một hàm `apply_permissions(role)` được gọi.
@@ -164,9 +164,13 @@ CSDL được thiết kế để chuẩn hóa và liên kết các nghiệp vụ
 * **Mục đích:** Quản lý hồ sơ gốc của *tất cả* nhân viên trong công ty (bao gồm cả Admin, Kế toán, và Tài xế).
 * **Người thực hiện:** Admin.
 * **Luồng nghiệp vụ:**
+  
     *   Cung cấp các chức năng CRUD (Thêm, Sửa, Xóa) cơ bản cho nhân viên.
+    
     *   **Logic Sửa/Lưu:** Sử dụng biến nội bộ `current_mode` ("ADD" hoặc "EDIT") để xác định nút "Lưu" sẽ chạy lệnh `INSERT` hay `UPDATE`.
+    
     *   **Xóa:** Khi xóa một nhân viên, hệ thống thực hiện xóa xếp tầng (cascade delete) để xóa tất cả dữ liệu liên quan (tài khoản, thông tin tài xế, chuyến đi,...) trước khi xóa nhân viên gốc, đảm bảo toàn vẹn CSDL.
+    
 * **Liên kết CSDL:** Thao tác trực tiếp trên bảng `NhanVien`.
 
 #### 4.2.4. Chức năng Quản lý Tài xế (Admin)
@@ -181,8 +185,11 @@ CSDL được thiết kế để chuẩn hóa và liên kết các nghiệp vụ
 * **Mục đích:** Chuyên biệt hóa thông tin cho các nhân viên có vai trò là "Tài xế".
 * **Người thực hiện:** Admin.
 * **Luồng nghiệp vụ:**
+  
     *   Khi "Thêm" tài xế, Admin phải nhập `MaNhanVien` (phải tồn tại trong bảng `NhanVien`), Hạng bằng lái, Ngày hết hạn...
+    
     *   Admin có thể cập nhật trạng thái "Đang làm việc" / "Nghỉ" (ảnh hưởng đến `NhanVien.TrangThai`) và "Rảnh" / "Đang lái" (ảnh hưởng đến `TaiXe.TrangThaiTaiXe`).
+    
 * **Liên kết CSDL:** Thao tác trên cả hai bảng `NhanVien` (cập nhật thông tin chung) và `TaiXe` (cập nhật thông tin bằng lái).
 
 #### 4.2.5. Chức năng Quản lý Xe (Admin)
@@ -197,9 +204,13 @@ CSDL được thiết kế để chuẩn hóa và liên kết các nghiệp vụ
 * **Mục đích:** Quản lý toàn bộ phương tiện của công ty.
 * **Người thực hiện:** Admin.
 * **Luồng nghiệp vụ:**
+  
     *   Cung cấp CRUD cho thông tin xe (Biển số, Loại xe, Hãng, VIN, Hạn đăng kiểm...).
+    
     *   **Gán tài xế:** Admin có thể chọn một tài xế từ combobox "Tên người lái" (dữ liệu lấy từ bảng `TaiXe`) để gán cho chiếc xe này (cập nhật cột `Xe.MaNhanVienHienTai`).
+    
     *   **Quản lý trạng thái:** Cập nhật trạng thái xe (Hoạt động, Bảo trì, Hỏng).
+    
 * **Liên kết CSDL:** Thao tác chính trên bảng `Xe`. Đọc dữ liệu từ `TaiXe` và `NhanVien` để hiển thị combobox.
 
 #### 4.2.6. Chức năng Quản lý Tài khoản (Admin)
@@ -214,7 +225,9 @@ CSDL được thiết kế để chuẩn hóa và liên kết các nghiệp vụ
 * **Mục đích:** Tạo, xóa và phân quyền đăng nhập cho người dùng.
 * **Người thực hiện:** Admin.
 * **Luồng nghiệp vụ:**
+  
     *   **Thêm:** Admin nhập "Tên đăng nhập", "Mật khẩu", chọn "Nhân viên" (từ combobox) và "Vai trò" (Admin/TaiXe). Mật khẩu được hash SHA-256 trước khi `INSERT` vào CSDL.
+    
     *   **Sửa:** Admin có thể thay đổi "Vai trò" hoặc "Nhân viên" được liên kết. Nếu Admin nhập mật khẩu mới, mật khẩu sẽ được hash và `UPDATE`. Nếu Admin để nguyên placeholder `******`, mật khẩu cũ được giữ nguyên.
 * **Liên kết CSDL:** Thao tác trên bảng `TaiKhoan`. Đọc từ `NhanVien` để điền vào combobox.
 
@@ -234,13 +247,17 @@ CSDL được thiết kế để chuẩn hóa và liên kết các nghiệp vụ
 * **Mục đích:** Giao diện nghiệp vụ chính để phân công và thực thi công việc.
 * **Người thực hiện:** Admin và Tài xế (giao diện thay đổi theo vai trò).
 * **Luồng nghiệp vụ (Admin):**
+  
     *   **Tạo chuyến đi:** Admin nhấn "Thêm".
+    
     *   **Lọc thông minh:** Khi Admin chọn một Tài xế (ví dụ: "Nguyễn Văn An") từ combobox "Tài xế", hệ thống sẽ kiểm tra xem tài xế đó có đang giữ xe nào không.
         *   Nếu tài xế **đang giữ xe** (ví dụ: 51G-123.45) -> Combobox "Xe" chỉ hiển thị `[51G-123.45]` và tự động chọn.
         *   Nếu tài xế **rảnh** -> Combobox "Xe" hiển thị tất cả các xe đang rảnh khác.
     *   **Lưu (Gán việc):** Admin nhấn "Lưu", một chuyến đi mới được `INSERT` vào bảng `ChuyenDi` với `TrangThai = 0` (Đã gán).
 * **Luồng nghiệp vụ (Tài xế):**
+  
     *   Tài xế chỉ thấy các chuyến đi được gán cho mình (lọc bằng `WHERE MaNhanVien = ?`).
+    
     *   **Bắt đầu:** Tài xế chọn chuyến đi (trạng thái "Đã gán") và nhấn "Bắt đầu thực hiện". Hệ thống chạy 2 lệnh SQL:
   
         1.   `UPDATE ChuyenDi SET TrangThai = 1` (Đang thực hiện).
@@ -269,8 +286,11 @@ CSDL được thiết kế để chuẩn hóa và liên kết các nghiệp vụ
 
 * **Mục đích:** Ghi lại nhật ký sửa chữa, bảo dưỡng và chi phí liên quan.
 * **Luồng nghiệp vụ:**
+  
     *   **Phân quyền xem:** Admin thấy tất cả. Tài xế chỉ thấy lịch sử của xe mình đang giữ.
+    
     *   **Phân quyền sửa:** Admin có thể Thêm, Sửa, Xóa. Tài xế chỉ có thể Thêm (để báo cáo sửa vặt trên đường), không được Sửa/Xóa.
+    
     *   **Theo dõi người nhập:** Khi Thêm, hệ thống tự động lấy `MaNhanVien` của người đang đăng nhập và lưu vào cột `MaNhanVienNhap`. Bảng hiển thị của Admin sẽ JOIN với bảng `NhanVien` để hiển thị tên người nhập.
 
 #### 4.2.9. Chức năng Nhật ký Nhiên liệu (Admin & Tài xế)
@@ -287,11 +307,16 @@ CSDL được thiết kế để chuẩn hóa và liên kết các nghiệp vụ
 
 * **Mục đích:** Quản lý chi phí nhiên liệu và quy trình duyệt chi.
 * **Luồng nghiệp vụ (Tài xế):**
+  
     *   Chỉ thấy nhật ký của mình.
+    
     *   Nhấn "Thêm" để báo cáo (Số lít, Chi phí, Số Odo). Mọi nhật ký mới tạo mặc định `TrangThaiDuyet = 0` (Chờ duyệt).
+    
     *   Tài xế có thể "Sửa" hoặc "Xóa" nhật ký, *chỉ khi* nó còn ở trạng thái "Chờ duyệt".
 * **Luồng nghiệp vụ (Admin):**
+  
     *   Thấy tất cả nhật ký. Form nhập liệu bị ẩn.
+    
     *   Admin chọn một nhật ký đang "Chờ duyệt" và nhấn nút **"Duyệt"** (set `TrangThaiDuyet = 1`) hoặc **"Từ chối"** (set `TrangThaiDuyet = 2`).
 
 #### 4.2.10. Chức năng Đổi mật khẩu & Đăng xuất
@@ -301,8 +326,11 @@ CSDL được thiết kế để chuẩn hóa và liên kết các nghiệp vụ
 
 * **Mục đích:** Bảo mật tài khoản cá nhân và kết thúc phiên làm việc.
 * **Luồng nghiệp vụ:**
+  
     *   **Đổi mật khẩu:** (File `thongtin_taikhoan.py`) Người dùng phải nhập đúng mật khẩu cũ. Mật khẩu mới sau đó được hash và `UPDATE` vào CSDL.
+    
     *   **Đăng xuất:** (File `main.py`) Hiển thị hộp thoại xác nhận. Nếu đồng ý, đóng Form Main và mở lại Form `login.py`. Nút này chỉ hiển thị cho Admin.
+    
     *   **Thoát:** Đóng toàn bộ ứng dụng.
 
 ---
@@ -310,6 +338,7 @@ CSDL được thiết kế để chuẩn hóa và liên kết các nghiệp vụ
 ## 5. CÀI ĐẶT VÀ CHẠY THỬ
 
 **Yêu cầu:**
+
 *   Python 3.8+
 *   Microsoft SQL Server (đã bật TCP/IP)
 
@@ -327,18 +356,24 @@ CSDL được thiết kế để chuẩn hóa và liên kết các nghiệp vụ
     ```
 
 3.   **Cài đặt CSDL:**
+   
     *   Mở SQL Server Management Studio (SSMS).
+    
     *   Mở và chạy file `QL_VanTai.sql` (hoặc tên tương tự) để tạo CSDL, các bảng và dữ liệu mẫu.
 
 4.   **Cấu hình kết nối:**
+   
     *   Mở file `utils.py`.
+    
     *   Chỉnh sửa chuỗi `connection_string` cho đúng với **Tên Server**, **Database** (`QL_VanTai`), **User ID** (`sa`) và **Password** của bạn.
 
 5.   **Chạy chương trình:**
     ```bash
     python login.py
     ```
+   
     *   (Tài khoản Admin mẫu: `admin` / `123`)
+   
     *   (Tài khoản Tài xế mẫu: `an.nv` / `123`)
 
 ---
@@ -364,6 +399,7 @@ CSDL được thiết kế để chuẩn hóa và liên kết các nghiệp vụ
 *   (Thêm các link YouTube, Stack Overflow, hoặc tài liệu bạn đã tham khảo tại đây)
 *   [GeeksforGeeks - Python Tkinter](https://www.geeksforgeeks.org/python-gui-tkinter/)
 *   [pyodbc Wiki](https://github.com/mkleehammer/pyodbc/wiki)
+
 
 
 
