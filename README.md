@@ -20,7 +20,11 @@
 
 ---
 
+<img width="1018" height="573" alt="image" src="https://github.com/user-attachments/assets/19477c77-18bb-4605-a076-370c82a6ae4b" />
 
+---
+
+<img width="1017" height="568" alt="image" src="https://github.com/user-attachments/assets/f2dca990-7d50-492f-8241-07d061415b31" />
 
 ## 2. KHẢO SÁT HỆ THỐNG
 
@@ -310,3 +314,4 @@ CSDL được thiết kế để chuẩn hóa và liên kết các nghiệp vụ
 *   (Thêm các link YouTube, Stack Overflow, hoặc tài liệu bạn đã tham khảo tại đây)
 *   [GeeksforGeeks - Python Tkinter](https://www.geeksforgeeks.org/python-gui-tkinter/)
 *   [pyodbc Wiki](https://github.com/mkleehammer/pyodbc/wiki)
+
