@@ -44,28 +44,6 @@ Qua khảo sát thực tế, tình hình quản lý vận tải tại các doanh
 
 Từ thực trạng trên, nhu cầu phát triển một hệ thống "cây nhà lá vườn" (in-house) là rất cấp thiết. Hệ thống này cần gọn nhẹ, đúng trọng tâm nghiệp vụ, dễ sử dụng cho cả Admin và Tài xế, và đặc biệt là giải quyết bài toán cốt lõi: **Minh bạch hóa dữ liệu và Chi phí**.
 
-### 2.2. Mục tiêu của đồ án
-
-#### a) Mục tiêu tổng quát
-
-Xây dựng một Hệ thống phần mềm Quản lý Vận tải hoàn chỉnh, hoạt động trên nền tảng Desktop (Python Tkinter). Hệ thống này nhằm mục đích tin học hóa toàn bộ quy trình nghiệp vụ liên quan đến việc quản lý xe và tài xế, thay thế các phương pháp thủ công, đảm bảo tính **Chính xác - An toàn - Nhanh chóng - Minh bạch**.
-
-#### b) Mục tiêu cụ thể
-
-* **Về mặt Nghiệp vụ (Chức năng):**
-    * **Số hóa và Chuẩn hóa:** Quản lý tập trung thông tin phương tiện (`Xe`), nhân sự (`NhanVien`, `TaiXe`), và chi phí (`LichSuBaoTri`, `NhatKyNhienLieu`).
-    * **Tự động hóa Quy trình:** Tự động cập nhật trạng thái "Rảnh" / "Đang lái" của tài xế khi họ nhận hoặc hoàn thành chuyến đi.
-    * **Phân quyền rõ ràng:** Xây dựng cơ chế phân quyền chi tiết cho 2 nhóm đối tượng:
-        * **Quản trị viên (Admin):** Quản lý toàn bộ hệ thống, phân công chuyến đi, duyệt chi phí.
-        * **Tài xế (TaiXe):** Thực thi chuyến đi, báo cáo chi phí (nhiên liệu, sửa chữa vặt).
-    * **Minh bạch Chi phí:** Cung cấp quy trình báo cáo nhiên liệu (Tài xế tạo -> Admin Duyệt/Từ chối).
-* **Về mặt Kỹ thuật:**
-    * **Áp dụng công nghệ:** Thiết kế và phát triển hệ thống dựa trên mô hình Client-Server, sử dụng ngôn ngữ Python, thư viện Tkinter và CSDL SQL Server.
-    * **Giao diện thân thiện:** Xây dựng giao diện người dùng (UI/UX) trực quan, dễ sử dụng cho cả hai vai trò.
-    * **Đảm bảo an toàn:** Đảm bảo tính bảo mật dữ liệu, mã hóa mật khẩu (SHA-256) và ngăn chặn các truy cập trái phép.
-
----
-
 ## 3. CÔNG NGHỆ SỬ DỤNG
 
 * **Ngôn ngữ lập trình:** Python 3.x
@@ -85,6 +63,8 @@ Xây dựng một Hệ thống phần mềm Quản lý Vận tải hoàn chỉnh
 
 CSDL được thiết kế để chuẩn hóa và liên kết các nghiệp vụ cốt lõi.
 
+<img width="1011" height="692" alt="image" src="https://github.com/user-attachments/assets/0d53d926-cfc3-45ab-bcf3-996e09963660" />
+
 <p align="center">
     <b></b>
   <i>Hình 4.1: Sơ đồ quan hệ (ERD) của CSDL QL_VanTai</i>
@@ -93,18 +73,42 @@ CSDL được thiết kế để chuẩn hóa và liên kết các nghiệp vụ
 **Thiết kế các bảng chính:**
 
 *   **Bảng `NhanVien`:** Bảng cha lưu thông tin chung (MaNhanVien, HoVaTen, TrangThai [1=Làm việc, 0=Nghỉ]).
-*   **Bảng `TaiXe`:** Bảng con của `NhanVien`, lưu thông tin bằng lái và `TrangThaiTaiXe` (1=Rảnh, 2=Đang lái).
-*   **Bảng `TaiKhoan`:** Quản lý đăng nhập, liên kết `TenDangNhap` với `MaNhanVien` và lưu `VaiTro` (Admin/TaiXe).
-*   **Bảng `Xe`:** Quản lý phương tiện, chứa khóa ngoại `MaNhanVienHienTai` (liên kết đến `NhanVien`).
-*   **Bảng `ChuyenDi`:** Bảng nghiệp vụ chính, liên kết `MaNhanVien` và `BienSoXe`.
-*   **Bảng `LichSuBaoTri`:** Chứa khóa ngoại `MaNhanVienNhap` để theo dõi người nhập.
-*   **Bảng `NhatKyNhienLieu`:** Chứa khóa ngoại `MaNhanVien` (người đổ) và `TrangThaiDuyet` (0=Chờ, 1=Duyệt, 2=Từ chối).
+  
+  <img width="780" height="157" alt="image" src="https://github.com/user-attachments/assets/6bf3cfdf-7e74-4afc-8d2b-3b51a08182c8" />
 
-*(Bạn có thể dán thêm các hình ảnh thiết kế chi tiết từng bảng tại đây nếu muốn)*
+*   **Bảng `TaiXe`:** Bảng con của `NhanVien`, lưu thông tin bằng lái và `TrangThaiTaiXe` (1=Rảnh, 2=Đang lái).
+
+  <img width="842" height="174" alt="image" src="https://github.com/user-attachments/assets/91ad61e0-bf04-427c-8a08-4836bd14e653" />
+
+*   **Bảng `TaiKhoan`:** Quản lý đăng nhập, liên kết `TenDangNhap` với `MaNhanVien` và lưu `VaiTro` (Admin/TaiXe).
+
+<img width="903" height="149" alt="image" src="https://github.com/user-attachments/assets/9a6e8e60-c9d2-499f-a7aa-b4bcef2efdad" />
+
+  
+*   **Bảng `Xe`:** Quản lý phương tiện, chứa khóa ngoại `MaNhanVienHienTai` (liên kết đến `NhanVien`).
+
+  <img width="819" height="261" alt="image" src="https://github.com/user-attachments/assets/da79230e-bf43-4aa5-912f-db41a9cc0507" />
+
+*   **Bảng `ChuyenDi`:** Bảng nghiệp vụ chính, liên kết `MaNhanVien` và `BienSoXe`.
+
+<img width="969" height="238" alt="image" src="https://github.com/user-attachments/assets/2d7d7da6-dab1-480c-ab2c-30be3bd166a9" />
+
+  
+*   **Bảng `LichSuBaoTri`:** Chứa khóa ngoại `MaNhanVienNhap` để theo dõi người nhập.
+
+  <img width="818" height="166" alt="image" src="https://github.com/user-attachments/assets/bb565977-1850-4bb5-91ee-3bf64d94e4e2" />
+
+*   **Bảng `NhatKyNhienLieu`:** Chứa khóa ngoại `MaNhanVien` (người đổ) và `TrangThaiDuyet` (0=Chờ, 1=Duyệt, 2=Từ chối).
+  
+<img width="971" height="224" alt="image" src="https://github.com/user-attachments/assets/b81c68f2-d323-479c-83b1-518259bdc63f" />
+
+
 
 ### 4.2. Giao diện và Chức năng (Chi tiết)
 
 #### 4.2.1. Giao diện Đăng nhập
+
+<img width="966" height="556" alt="image" src="https://github.com/user-attachments/assets/34285ee0-030e-413e-8b5a-231651823afe" />
 
 <p align="center">
   <b></b>
@@ -114,10 +118,15 @@ CSDL được thiết kế để chuẩn hóa và liên kết các nghiệp vụ
 * **Mục đích:** Xác thực người dùng và phân luồng nghiệp vụ.
 * **Luồng nghiệp vụ:**
     1.   Người dùng nhập Tên đăng nhập và Mật khẩu.
+  
     2.   Hệ thống băm (SHA-256) mật khẩu nhập vào.
+    
     3.   Truy vấn CSDL (`TaiKhoan`) để kiểm tra `TenDangNhap` và `MatKhau` (đã hash) có khớp không.
+    
     4.   Nếu khớp, hệ thống lấy ra `VaiTro` (Admin/TaiXe) và `TenDangNhap`.
+    
     5.   Đóng form Đăng nhập, mở form `main.py` và truyền 2 tham số `VaiTro`, `TenDangNhap` sang.
+    
     6.   Nếu không khớp, hiển thị thông báo "Sai tên đăng nhập hoặc mật khẩu".
 
 #### 4.2.2. Giao diện Chính (Main Form) & Phân quyền
@@ -314,4 +323,5 @@ CSDL được thiết kế để chuẩn hóa và liên kết các nghiệp vụ
 *   (Thêm các link YouTube, Stack Overflow, hoặc tài liệu bạn đã tham khảo tại đây)
 *   [GeeksforGeeks - Python Tkinter](https://www.geeksforgeeks.org/python-gui-tkinter/)
 *   [pyodbc Wiki](https://github.com/mkleehammer/pyodbc/wiki)
+
 
