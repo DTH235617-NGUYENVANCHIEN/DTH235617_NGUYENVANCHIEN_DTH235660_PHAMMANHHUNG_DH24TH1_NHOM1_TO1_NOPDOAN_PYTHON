@@ -376,6 +376,8 @@ CSDL được thiết kế để chuẩn hóa và liên kết các nghiệp vụ
 *   **Phiên bản Mobile:** Phát triển ứng dụng di động gọn nhẹ (ví dụ: dùng React Native hoặc Flutter) cho tài xế để báo cáo nhiên liệu và nhận/trả chuyến đi thuận tiện hơn.
 
 ---
+<img width="1116" height="628" alt="image" src="https://github.com/user-attachments/assets/8427cf2e-cbce-4694-a9c1-43e063c58817" />
+
 
 
 
