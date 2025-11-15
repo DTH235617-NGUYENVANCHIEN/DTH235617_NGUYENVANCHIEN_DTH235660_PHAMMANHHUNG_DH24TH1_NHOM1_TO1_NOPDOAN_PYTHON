@@ -6,13 +6,12 @@
 <p align="center">
     
 </p>
+
 **Giảng viên hướng dẫn:** Ths. Nguyễn Ngọc Minh
 
-**Sinh viên thực hiên: **
+**Sinh viên thực hiên:** 
 *   Nguyễn Văn Chiến - DTH235617 - DH24TH1_Nhóm1_Tổ1
 *   Phạm Mạnh Hùng- DTH235660 - DH24TH1_Nhóm1_Tổ1
-
-**Lớp:** DH24TH1
 
 
 
@@ -378,6 +377,7 @@ CSDL được thiết kế để chuẩn hóa và liên kết các nghiệp vụ
 
 ---
 <img width="1116" height="628" alt="image" src="https://github.com/user-attachments/assets/8427cf2e-cbce-4694-a9c1-43e063c58817" />
+
 
 
 
